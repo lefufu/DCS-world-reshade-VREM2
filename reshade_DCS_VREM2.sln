@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36603.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DCS_VREM2", "DCS_VREM2.vcxproj", "{9860678F-F20C-4A7D-AC43-2C1CC7F44C38}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VREM_launcher", "VREM_launcher\VREM_launcher.vcxproj", "{201F7620-C042-474E-849E-01ED38D5F367}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		crc32_hash.hpp = crc32_hash.hpp
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9860678F-F20C-4A7D-AC43-2C1CC7F44C38}.Debug|x64.ActiveCfg = Debug|x64
+		{9860678F-F20C-4A7D-AC43-2C1CC7F44C38}.Debug|x64.Build.0 = Debug|x64
+		{9860678F-F20C-4A7D-AC43-2C1CC7F44C38}.Debug|x86.ActiveCfg = Debug|Win32
+		{9860678F-F20C-4A7D-AC43-2C1CC7F44C38}.Debug|x86.Build.0 = Debug|Win32
+		{9860678F-F20C-4A7D-AC43-2C1CC7F44C38}.Release|x64.ActiveCfg = Release|x64
+		{9860678F-F20C-4A7D-AC43-2C1CC7F44C38}.Release|x64.Build.0 = Release|x64
+		{9860678F-F20C-4A7D-AC43-2C1CC7F44C38}.Release|x86.ActiveCfg = Release|Win32
+		{9860678F-F20C-4A7D-AC43-2C1CC7F44C38}.Release|x86.Build.0 = Release|Win32
+		{201F7620-C042-474E-849E-01ED38D5F367}.Debug|x64.ActiveCfg = Debug|x64
+		{201F7620-C042-474E-849E-01ED38D5F367}.Debug|x64.Build.0 = Debug|x64
+		{201F7620-C042-474E-849E-01ED38D5F367}.Debug|x86.ActiveCfg = Debug|Win32
+		{201F7620-C042-474E-849E-01ED38D5F367}.Debug|x86.Build.0 = Debug|Win32
+		{201F7620-C042-474E-849E-01ED38D5F367}.Release|x64.ActiveCfg = Release|x64
+		{201F7620-C042-474E-849E-01ED38D5F367}.Release|x64.Build.0 = Release|x64
+		{201F7620-C042-474E-849E-01ED38D5F367}.Release|x86.ActiveCfg = Release|Win32
+		{201F7620-C042-474E-849E-01ED38D5F367}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5D4DE81A-6CBC-466E-9CCC-D1C0BB1EEE82}
+	EndGlobalSection
+EndGlobal
