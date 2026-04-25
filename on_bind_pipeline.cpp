@@ -79,6 +79,8 @@ void process_action_log(std::unordered_map<uint64_t, Shader_Definition>::iterato
 	if (it->second.feature == Feature::VRMode)
 	{
 		a_shared.cb_inject_values.VRMode = 1.0;
+		//for technique control
+		g_shared_state->is_VR = true;
 		// identify which view was used before mirror view
 		// defaut
 		a_shared.mirror_VR = 0;
@@ -247,6 +249,10 @@ void process_action_dump_CB(std::unordered_map<uint64_t, Shader_Definition>::ite
 // setup flags to render technique
 void process_action_trackRT(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
+	
+	//handle different config between VR and 2D
+	//if ( it->second.feature == Feature::GlobalVS1 )
+	
 	if (g_shared_state->technique_enabled)
 	{
 		a_shared.track_for_render_target = true;
@@ -263,14 +269,17 @@ void process_action_renderTechnique(std::unordered_map<uint64_t, Shader_Definiti
 {
 	if (g_shared_state->technique_enabled)
 	{
-		
-		a_shared.track_for_render_target = false;
+		//handle different shader for VR and 2D
+		if ((!a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global2) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1))
+		{
+			a_shared.track_for_render_target = false;
 
-		a_shared.render_technique = true;
+			a_shared.render_technique = true;
 #if _DEBUG_LOGS  
-		// log infos
-		log_start_monitor("end of traking Render target, request technique rendering");
+			// log infos
+			log_start_monitor("end of traking Render target, request technique rendering");
 #endif
+		}
 	}
 }
 

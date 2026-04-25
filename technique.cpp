@@ -376,9 +376,9 @@ void render_technique(short int display_to_use, command_list* cmd_list) {
     // do not engage effect if render target view is not identified and either in 2D or in VR with enough time to get texture
 //if (flag_capture)
 { 
+    
     if (last_RTV_saved.copied && !a_shared.cb_inject_values.mapMode  && ((a_shared.wait_for_technique > FRAME_BEFORE_TECHNIQUE && a_shared.cb_inject_values.max_display > 0) || a_shared.cb_inject_values.max_display == 0))
-    {
-        
+    {      
         //texture needed defined if at least 1 shader is using DEPTH or STENCIL, computed when reading technique list
         if (a_shared.texture_needed)
         {
@@ -399,7 +399,6 @@ void render_technique(short int display_to_use, command_list* cmd_list) {
 #endif
         }
 
-
         //export preprocessor variables (once) 
         if (display_to_use <= 1 && !g_shared_state->preprocessor_exported)
         {
@@ -417,6 +416,7 @@ void render_technique(short int display_to_use, command_list* cmd_list) {
 #endif
         }
 
+
         // render all activated techniques if not 2D mirror or in 2D (reshade is already rendering the effect) 
         // if (!g_shared_state->no_double)
         {
@@ -425,8 +425,15 @@ void render_technique(short int display_to_use, command_list* cmd_list) {
             
                 for (int i = 0; i < g_shared_state->technique_vector.size(); ++i)
                 {
-                
-                    if (g_shared_state->technique_vector[i].VR_technique_status && (!g_shared_state->no_double || (g_shared_state->no_double && !g_shared_state->technique_vector[i].reshade_technique_status)))
+               
+					bool render_tech = false;
+                    //2D case
+                    if (!a_shared.cb_inject_values.VRMode && g_shared_state->technique_vector[i].VR_technique_status && (!g_shared_state->no_double || (g_shared_state->no_double && !g_shared_state->technique_vector[i].reshade_technique_status)))
+                        render_tech = true;
+                    // VR case
+                    if (a_shared.cb_inject_values.VRMode && g_shared_state->technique_vector[i].reshade_technique_status)
+                        render_tech = true;
+					if (render_tech)
                     {
                         //set uniform for technique if needed
                         if (g_shared_state->technique_vector[i].uniform.size() > 0)
@@ -438,8 +445,7 @@ void render_technique(short int display_to_use, command_list* cmd_list) {
                             }
                     
                         }
-                
-                        // engage effect (will be compiled at the first launch)
+
                         g_shared_state->runtime->render_technique(g_shared_state->technique_vector[i].technique, cmd_list, last_RTV_saved.RV, last_RTV_saved.RV);
     #if _DEBUG_LOGS
                         log_effect(g_shared_state->technique_vector[i], cmd_list, last_RTV_saved.RV);

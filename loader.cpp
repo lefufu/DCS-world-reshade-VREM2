@@ -178,12 +178,17 @@ static void draw_settings(reshade::api::effect_runtime* runtime)
     ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1), "RELEASE MODE - Hot reload & debug messages disabled");
     ImGui::Separator();
 #endif
-    // display technique options
-    ImGui::Separator();
-    ImGui::Text("Integrate the technique into the game's render pipeline and not on the last draw");
-    ImGui::Text("(to avoid processing of GUI elements or mask displayed on GUI elements : map,..) ");
-    ImGui::Text("tick option 'Technique into the game's render pipeline' in VREM Mod settings ");
-
+ 
+    // to be used only if 2D, otherwise technique control is to be applied
+    if (g_shared_state_l.technique_enabled && !g_shared_state_l.is_VR)
+    {
+        // display technique options
+        ImGui::Separator();
+        ImGui::Text("!! To be used in 2D only !! ");
+        ImGui::Text("Integrate the technique into the game's render pipeline and not on the last draw");
+        ImGui::Text("(to avoid processing of GUI elements or mask displayed on GUI elements : map,..) ");
+        ImGui::Text("tick option 'Technique into the game's render pipeline' in VREM Mod settings ");
+        ImGui::Separator();
     /*if (ImGui::Checkbox("Enable non global technique ", &g_shared_state_l.technique_enabled))
     {
         // save technique status in file (in get_settings_from_uniform)
@@ -191,11 +196,9 @@ static void draw_settings(reshade::api::effect_runtime* runtime)
         reshade::log::message(reshade::log::level::info, "****** loader - change flag for technique => request save *******");
     } */
 
-    // ImGui::Text("size of vector technique: %d", g_shared_state_l.technique_vector.size());
-    if (g_shared_state_l.technique_enabled)
-    {
-		// handle double injection issue : if tehcnique is active for end of draw it will not be displayed into the game's render pipeline
-        if (ImGui::Checkbox("Disable technique injection if effect is active", &g_shared_state_l.no_double))
+
+        // handle double injection issue : if tehcnique is active for end of draw it will not be displayed into the game's render pipeline
+        if (ImGui::Checkbox("Disable technique injection if effect is active (when configuring technique)", &g_shared_state_l.no_double))
         {
             // save technique status in file (in get_settings_from_uniform)
             g_shared_state_l.request_update_file = true;
@@ -219,6 +222,12 @@ static void draw_settings(reshade::api::effect_runtime* runtime)
             }
             ImGui::EndDisabled();
         }
+    }
+    else if (g_shared_state_l.technique_enabled && g_shared_state_l.is_VR)
+    {
+        ImGui::Separator();
+        ImGui::Text("'Technique into the game's render pipeline' in VREM Mod settings activated");
+        ImGui::Text("activate the technique from 'home' menu for VR to see them in VR and in mirror window");
     }
 }
 
@@ -327,6 +336,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
         reshade::register_event<reshade::addon_event::reshade_overlay>(on_reshade_overlay);
         reshade::register_event<reshade::addon_event::reshade_reloaded_effects>(on_reshade_reloaded_effects);
         reshade::register_event<reshade::addon_event::init_swapchain>(on_init_swapchain);
+
 #else
         // Mode Release : pas de reloader
         reshade::log::message(reshade::log::level::info, "VREM Loader: RELEASE MODE - Direct calls");

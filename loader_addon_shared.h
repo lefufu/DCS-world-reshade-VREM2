@@ -204,5 +204,6 @@ struct SharedState {
     bool request_update_file = false;
     bool no_double = true;
 	bool preprocessor_exported = false;
+	bool is_VR = false;
     
 };

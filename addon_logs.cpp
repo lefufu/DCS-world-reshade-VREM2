@@ -855,7 +855,7 @@ void log_texture_view(reshade::api::device* dev, std::string name, reshade::api:
 		s.clear();
 
 		s << "  associated resource handle " << std::hex << res.handle << " , type =" << to_string(desc_res.type) << " , usage =" << " 0x" << std::hex << (uint32_t)desc_res.usage;
-		s << ", width: " << desc_res.texture.width << ", height: " << desc_res.texture.height << ", levels: " << desc_res.texture.levels << ", format: " << to_string(desc_res.texture.format);
+		s << std::dec << ", width: " << desc_res.texture.width << ", height: " << std::dec << desc_res.texture.height << ", levels: " << desc_res.texture.levels << ", format: " << to_string(desc_res.texture.format);
 		reshade::log::message(reshade::log::level::info, s.str().c_str());
 		s.str("");
 		s.clear();

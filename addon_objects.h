@@ -203,11 +203,16 @@ enum class Feature : uint32_t
 	//GUI 
 	GUI = 14,
 	// Reshade effects
-	Effects = 15,
+	GlobalVS1 = 15,
+	GlobalVS1b = 16,
+	GUI_MFD = 17,
+	// VS of 1sd global color change PS for VR
+	VS_global1 = 18,
 	// Testing : for testing purpose
 	Testing = 20,
 	// VS of 2nd global color change PS
 	VS_global2 = 21,
+
 	// PS of sky to not modify gAtmInstensity
 	Sky = 22
 };
@@ -227,12 +232,14 @@ inline std::unordered_map<Feature, std::string> debug_feature_name = {
 	{Feature::NS430, "NS430"},
 	{Feature::NVG, "NVG"},
 	{Feature::GUI, "GUI"},
-	{Feature::Effects, "Effects"},
+	{Feature::GlobalVS1, "GlobalVS1"},
+	{Feature::GlobalVS1b, "GlobalVS1b"},
 	{Feature::Testing, "Testing"},
 	{Feature::VS_global2, "VS_global2"},
+	{Feature::VS_global1, "VS_global1"},
 	{Feature::Sky, "Sky"},
-	
-	
+	{Feature::GUI_MFD, "GUI_MFD"},
+
 };
 
 //*****************************************************************************
@@ -541,10 +548,16 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	{ 0x57D037A0, Shader_Definition(action_injectCB, Feature::Sky, L"", 0, {SET_MISC}) },
 
 	// global PS for all changes
-	{ 0xBAF1E52F, Shader_Definition(action_replace | action_injectText| action_renderTechnique, Feature::Global, L"global_PS_2.cso", 0, {SET_COLOR, SET_MISC}) },
-	//{ 0xBAF1E52F, Shader_Definition(action_replace_bind | action_injectText, Feature::Global, L"test_mask.cso", 0, {SET_TECHNIQUE, SET_MISC}) },
-	// VS associated with global PS 2, trigger draw increase (not in PS to be more DCS settings independant)
+	{ 0xBAF1E52F, Shader_Definition(action_replace | action_injectText, Feature::Global, L"global_PS_2.cso", 0, {SET_MISC}) },
+
+	// VS associated with global PS 2, trigger draw increase (not in PS to be more DCS settings independant) and engage render technique if 2D mode 
+	{ 0x8DB626CD, Shader_Definition(action_log | action_renderTechnique , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
+	/*
 	{ 0x8DB626CD, Shader_Definition(action_log , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
+	*/
+	// render technique before GUI (VR only)
+	{ 0x6656f8a6 , Shader_Definition(action_renderTechnique, Feature::VS_global1, L"", 0, {SET_DEFAULT}) },
+
 	// Label PS 
 	{ 0x6CEA1C47, Shader_Definition(action_replace_bind | action_injectText, Feature::Label , L"labels_PS.cso", 0, {SET_MISC}) },
 	// ** NS430 **
@@ -553,18 +566,21 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	// to start spying texture for screen texture (Vs associated with NS430 screen EDF9F8DD for su25T&UH1, not same res. texture !)
 	{ 0x8439C716, Shader_Definition(action_log, Feature::NS430, L"", 0, {SET_NS430}) },
 	// inject texture in global GUI and filter screen display (same shader for both)
-	{ 0x99D562, Shader_Definition(action_replace_bind | action_injectText, Feature::NS430 , L"VR_GUI_MFD_PS.cso", 0) },
+	// could be used to track render target for alternate VR rendering, exists also in UH1 ?
+	{ 0x99D562, Shader_Definition(action_replace_bind | action_injectText, Feature::GUI_MFD, L"VR_GUI_MFD_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
 	// disable NS430 frame, shared with some cockpit parts (can not be done by skip)
 	{ 0xEFD973A1, Shader_Definition(action_replace_bind, Feature::NS430 , L"NS430__framePS.cso", 0, {SET_NS430}) },
 	// disable NS430 screen background (done in shader because shared with other objects than NS430)
 	{ 0x6EF95548, Shader_Definition(action_replace_bind, Feature::NS430, L"NS430_screen_back.cso", 0, {SET_NS430}) },
 	// to filter out call for GUI and MFD
+	// use also to get RT in VR !
 	{ 0x55288581, Shader_Definition(action_log, Feature::GUI, L"", 0, {SET_DEFAULT}) },
 	//  ** identify game config **
 	// to define if VR is active or not (2D mirror view of VR )
 	{ 0x886E31F2, Shader_Definition(action_log, Feature::VRMode, L"", 0, {SET_DEFAULT}) },
 	// VS drawing cockpit parts to define if view is in welcome screen or map
 	{ 0xA337E177, Shader_Definition(action_log, Feature::mapMode, L"", 0, {SET_DEFAULT}) },
+
 	//  ** reflection on instrument, done by GCOCKPITIBL of CperFrame **
 	// A10C PS 
 	{ 0xECF6610, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
@@ -575,16 +591,15 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	//  ** NVG **
 	{ 0xE65FAB66, Shader_Definition(action_replace_bind , Feature::NVG , L"NVG_extPS.cso", 0, {SET_NVG}) },
 
-	//  ** identify render target ** (VS associated with first global PS)
-	{ 0xb034e6a5, Shader_Definition(action_track_RT , Feature::Effects , L"", 0, {SET_TECHNIQUE}) },
-	//{ 0x5f6a14bd, Shader_Definition(action_track_RT , Feature::Effects , L"", 0, {SET_TECHNIQUE}) },
-	
+	//  ** identify render target ** (VS associated with first global PS below GUI), VR only
+	{ 0xb034e6a5, Shader_Definition(action_track_RT , Feature::GlobalVS1 , L"", 0, {SET_TECHNIQUE}) },
+	/*
+	//  ** identify render target ** (same than previous mod), VR only
+	{ 0x936B2B6A, Shader_Definition(action_track_RT , Feature::GlobalVS1b , L"", 0, {SET_TECHNIQUE}) },
+	*/
+	//  ** identify render target ** (VS associated with first global PS), VR only
+	{ 0x5f6a14bd, Shader_Definition(action_track_RT , Feature::GlobalVS1b , L"", 0, {SET_TECHNIQUE}) },
 
-	//launch render 
-	//{ 0x936B2B6A, Shader_Definition(action_renderTechnique , Feature::Effects , L"", 0, {SET_TECHNIQUE}) },
-
-	// **test constant color shader for debug**
-	// { 0xCFB718E2, Shader_Definition(action_replace , Feature::Effects , L"intro_icons.cso", 0, {SET_DEFAULT}) },
 	//to test texture dump, VS associated with welcome screen Icons PS
 	// { 0x77c784e1, Shader_Definition(action_log | action_dump , Feature::Testing , L"", 0, {SET_DEFAULT}) },
 
