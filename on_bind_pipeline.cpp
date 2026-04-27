@@ -147,9 +147,21 @@ void process_action_injectText(command_list* commandList, std::unordered_map<uin
 		{
 			reshade::api::descriptor_table_update update;
 
-			//inject depth texture in t3 and t4 
-			inject_texture(commandList, 3, current_DepthStencil_handle, "Depth and stencil");
-
+			if (a_shared.cb_inject_values.AAMode == 1.0)
+			{
+				//inject depth texture in t3 and t4 for MSAA0X
+				inject_texture(commandList, 3, current_DepthStencil_handle, "Depth and stencil MSAA0x");
+			}
+			else if (a_shared.cb_inject_values.AAMode == 2.0)
+			{
+				//inject depth texture in t5 and t6  for MSAA2X
+				inject_texture(commandList, 5, current_DepthStencil_handle, "Depth and stencil MSAA2x");
+			}
+			else if (a_shared.cb_inject_values.AAMode == 4.0)
+			{
+				//inject depth texture in t7 and t8  for MSAA4X
+				inject_texture(commandList, 7, current_DepthStencil_handle, "Depth and stencil MSAA4x");
+			}
 		}
 
 	}
@@ -270,7 +282,7 @@ void process_action_renderTechnique(std::unordered_map<uint64_t, Shader_Definiti
 	if (g_shared_state->technique_enabled)
 	{
 		//handle different shader for VR and 2D
-		if ((!a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global2) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1))
+		if ((!a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global2) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1_MSAA))
 		{
 			a_shared.track_for_render_target = false;
 

@@ -208,13 +208,15 @@ enum class Feature : uint32_t
 	GUI_MFD = 17,
 	// VS of 1sd global color change PS for VR
 	VS_global1 = 18,
-	// Testing : for testing purpose
-	Testing = 20,
+	VS_global1_MSAA = 19,
 	// VS of 2nd global color change PS
 	VS_global2 = 21,
-
 	// PS of sky to not modify gAtmInstensity
-	Sky = 22
+	Sky = 22,
+	// VS ofglobal illum MSAA
+	VS_light_MSAA = 23,
+	// Testing : for testing purpose
+	Testing = 30
 };
 
 // mapping between technique name and feature for debug display
@@ -239,7 +241,8 @@ inline std::unordered_map<Feature, std::string> debug_feature_name = {
 	{Feature::VS_global1, "VS_global1"},
 	{Feature::Sky, "Sky"},
 	{Feature::GUI_MFD, "GUI_MFD"},
-
+	{Feature::VS_global1_MSAA, "VS_global1_MSAA"},
+	{Feature::VS_light_MSAA, "VS_light_MSAA"},
 };
 
 //*****************************************************************************
@@ -252,7 +255,7 @@ inline std::unordered_map<Feature, std::string> debug_feature_name = {
 static const int SETTINGS_SIZE = 12;
 
 constexpr uint8_t SET_DEFAULT = 0;
-constexpr uint8_t SET_ROTOR = 1;
+constexpr uint8_t SET_HELO = 1;
 constexpr uint8_t SET_IHADSS = 2;
 constexpr uint8_t SET_COLOR = 3;
 constexpr uint8_t SET_MISC = 4;
@@ -531,18 +534,17 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 {
 
 	// ** fix for rotor **
-	{0xC0CC8D69, Shader_Definition(action_replace_bind, Feature::Rotor, L"AH64_rotorPS.cso", 0, {SET_ROTOR})},
-	{ 0x349A1054, Shader_Definition(action_replace_bind, Feature::Rotor, L"AH64_rotor2PS.cso", 0, {SET_ROTOR}) },
-	{ 0xD3E172D4, Shader_Definition(action_replace_bind, Feature::Rotor, L"UH1_rotorPS.cso", 0, {SET_ROTOR}) },
+	{0xC0CC8D69, Shader_Definition(action_replace_bind, Feature::Rotor, L"AH64_rotorPS.cso", 0, {SET_HELO})},
+	{ 0x349A1054, Shader_Definition(action_replace_bind, Feature::Rotor, L"AH64_rotor2PS.cso", 0, {SET_HELO}) },
+	{ 0xD3E172D4, Shader_Definition(action_replace_bind, Feature::Rotor, L"UH1_rotorPS.cso", 0, {SET_HELO}) },
 	// ** fix for IHADSS **
-	{ 0x2D713734, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_PNVS_PS.cso", 0, {SET_IHADSS}) },
-	{ 0xDF141A84, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_PS.cso", 0, {SET_IHADSS}) },
-	{ 0x45E221A9, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_VS.cso", 0, {SET_IHADSS}) },
+	{ 0x2D713734, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_PNVS_PS.cso", 0, {SET_HELO}) },
+	{ 0xDF141A84, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_PS.cso", 0, {SET_HELO}) },
+	{ 0x45E221A9, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_VS.cso", 0, {SET_HELO}) },
 
 	// to start spying texture for depthStencil (Vs associated with global illumination PS)
-	// and inject modified CB CperFrame
-	//{ 0x4DDC4917, Shader_Definition(action_log | action_injectCB, Feature::GetStencil, L"", 0, {SET_DEFAULT}) },
-	{ 0x4DDC4917, Shader_Definition(action_log |action_get_text| action_injectCB | action_dump, Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
+	// and inject modified CB CperFrame (all MSAA supported)
+	{ 0x4DDC4917, Shader_Definition(action_log |action_get_text| action_injectCB, Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
 
 	//sky inject modified CB CperFrame
 	{ 0x57D037A0, Shader_Definition(action_injectCB, Feature::Sky, L"", 0, {SET_MISC}) },
@@ -557,6 +559,7 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	*/
 	// render technique before GUI (VR only)
 	{ 0x6656f8a6 , Shader_Definition(action_renderTechnique, Feature::VS_global1, L"", 0, {SET_DEFAULT}) },
+	{ 0x936b2b6a , Shader_Definition(action_renderTechnique, Feature::VS_global1_MSAA, L"", 0, {SET_DEFAULT}) },
 
 	// Label PS 
 	{ 0x6CEA1C47, Shader_Definition(action_replace_bind | action_injectText, Feature::Label , L"labels_PS.cso", 0, {SET_MISC}) },
@@ -613,6 +616,7 @@ inline std::unordered_map<std::string, int> settings_mapping = {
 	{"set_default", SET_DEFAULT},
 	{"set_misc", SET_MISC},
 	{"set_technique", SET_TECHNIQUE },
+	{"set_helo", SET_HELO },
 };
 
 //variables 
@@ -625,5 +629,8 @@ static const std::unordered_map<std::string, float*> var_mapping = {
 	{"var_NVG_size", &a_shared.cb_inject_values.NVGSize},
 	{"var_NVG_YPOS", &a_shared.cb_inject_values.NVGYPos},
 	{"var_test_color", &a_shared.cb_inject_values.testGlobal},
-
+	{"var_rotor", &a_shared.cb_inject_values.rotorFlag},
+	{"var_TADSDay", &a_shared.cb_inject_values.TADSDay},
+	{"var_TADSNight", &a_shared.cb_inject_values.TADSNight},
+	{"var_IHADSSxOffset", &a_shared.cb_inject_values.IHADSSxOffset},
 };

@@ -130,6 +130,9 @@ uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pip
 	resource scr_resource = dev->get_resource_from_view(src_resource_view_texture);
 	resource_desc src_resource_desc = dev->get_resource_desc(scr_resource);
 
+	//share AA Mode (1 = no MSAA, 2 = MSAA2x, 4 = MSAA4x)
+	a_shared.cb_inject_values.AAMode = static_cast<float>(src_resource_desc.texture.samples);
+
 	// create target resource once per game session, for each source resource 
 	bool resource_found = false;
 
@@ -185,13 +188,24 @@ uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pip
 				//handle case with depth stencil texture : create the second resource view for the stencil
 				if (depth_stencil_texture)
 				{
+					resource_view_desc srcv_desc = dev->get_resource_view_desc(src_resource_view_texture);
+
 					resource_view_desc stencil_desc = {};
-					stencil_desc.type = resource_view_type::texture_2d;
+					//stencil_desc.type = resource_view_type::texture_2d;
+					stencil_desc.type = srcv_desc.type; // same type as original view
 					stencil_desc.format = stencil_format;
+
+					/*
 					stencil_desc.texture.level_count = 1;
 					stencil_desc.texture.first_level = 0;
 					stencil_desc.texture.layer_count = 1;
 					stencil_desc.texture.first_layer = 0;
+					*/
+					
+					stencil_desc.texture.level_count = srcv_desc.texture.level_count;
+					stencil_desc.texture.first_level = srcv_desc.texture.first_level;
+					stencil_desc.texture.layer_count = srcv_desc.texture.layer_count;
+					stencil_desc.texture.first_layer = srcv_desc.texture.first_layer;
 
 					bool stencil_status = dev->create_resource_view(
 						text_copy.texresource,
@@ -243,93 +257,6 @@ uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pip
 	}
 	return scr_resource.handle;
 }
-/*
-// *******************************************************************************************************
-/// copy_plane_mask()
-/// <summary>
-///  create needed resource, then copy existing resource into the new one, then create the new associated resource views
-/// </summary>
-bool copy_plane_mask(command_list* cmd_list, shader_stage stages, pipeline_layout layout, uint32_t param_index, const descriptor_table_update& update)
-{
-
-	device* dev = cmd_list->get_device();
-
-	// get resource info (mask = t10)
-	reshade::api::resource_view src_resource_view_planeMask;
-	src_resource_view_planeMask = static_cast<const reshade::api::resource_view*>(update.descriptors)[10];
-
-	resource scr_resource = dev->get_resource_from_view(src_resource_view_planeMask);
-	resource_desc src_resource_desc = dev->get_resource_desc(scr_resource);
-
-	// create target resource once per game session, for each source resource 
-	bool resource_found = false;
-
-	auto it = a_shared.copied_textures.find(scr_resource.handle);
-	if (it == a_shared.copied_textures.end()) {
-
-		//create the entry to host resource and resource views and store it in a_shared.copied_textures
-		resource_DS_copy DS_copy = {};
-
-		// create a new single ressource containing stencil and depth
-#if _DEBUG_LOGS
-		log_creation_start("PlaneMask");
-#endif
-
-		bool status = dev->create_resource(src_resource_desc, nullptr, resource_usage::shader_resource, &DS_copy.texresource, nullptr);
-		if (!status)
-		{
-			//error when creating resource or resource view
-			log_error_creating_view();
-		}
-		else
-		{
-			// create resources view on the copied resource
-			DS_copy.texresource_view = copy_resource_view(dev, src_resource_view_planeMask, DS_copy.texresource);
-
-			if (DS_copy.texresource_view.handle != 0)
-			{
-				// store new elements for copied resource
-				a_shared.copied_textures.emplace(scr_resource.handle, DS_copy);
-				resource_found = true;
-#if _DEBUG_LOGS
-				log_resource_created("PlaneMask", dev, src_resource_desc, scr_resource.handle);
-				log_resource_view_created("PlaneMask",  dev, DS_copy.texresource_view, scr_resource.handle);
-#endif
-			}
-		}
-
-	}
-	else
-	{
-		resource_found = true;
-	}
-
-	if (resource_found && !a_shared.copied_textures[scr_resource.handle].copied)
-	{
-		
-		//flag texture copied to avoid double copy for MSAA because shader is called multiple time for a same "eye rendering" and only first call has good texture
-		a_shared.copied_textures[scr_resource.handle].copied = true;
-
-		// copy resource 
-		// put resources in good usage for copying
-		cmd_list->barrier(scr_resource, resource_usage::shader_resource, resource_usage::copy_source);
-		cmd_list->barrier(a_shared.copied_textures[scr_resource.handle].texresource, resource_usage::shader_resource, resource_usage::copy_dest);
-		// do copy
-		cmd_list->copy_resource(scr_resource, a_shared.copied_textures[scr_resource.handle].texresource);
-		//restore usage
-		cmd_list->barrier(scr_resource, resource_usage::copy_source, resource_usage::shader_resource);
-		cmd_list->barrier(a_shared.copied_textures[scr_resource.handle].texresource, resource_usage::copy_dest, resource_usage::shader_resource);
-
-		// to retrieve infos for pushing texture in bind_pipeline
-		current_DepthStencil_handle = scr_resource.handle;
-#if _DEBUG_LOGS
-		//log copy done
-		log_copy_texture("PlaneMask", current_DepthStencil_handle);
-#endif
-	}
-	return true;
-}
-*/
 
 // *******************************************************************************************************
 void delete_texture_resources(device* device)

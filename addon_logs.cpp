@@ -450,6 +450,28 @@ void log_creation_start(std::string texture_name)
 	}
 }
 
+void log_texture(std::stringstream *s, resource_desc check_new_res)
+{
+	switch (check_new_res.type) {
+	default:
+	case reshade::api::resource_type::unknown:
+		*s << "!!! error: resource_type not texture* !!!";
+		break;
+
+	case reshade::api::resource_type::texture_1d:
+	case reshade::api::resource_type::texture_2d:
+	case reshade::api::resource_type::texture_3d:
+		*s << ", texture format: " << to_string(check_new_res.texture.format);
+		*s << ", texture width: " << std::dec << check_new_res.texture.width;
+		*s << ", texture height: " << std::dec << check_new_res.texture.height;
+		*s << ", texture depth: " << std::dec << check_new_res.texture.depth_or_layers;
+		*s << ", texture samples: " << std::dec << check_new_res.texture.samples;
+		*s << ", texture levels: " << std::dec << check_new_res.texture.levels;
+		*s << ", usage: " << to_string(check_new_res.usage);
+		break;
+	}
+	*s << ";";
+}
 
 void log_resource_created(std::string texture_name, device* dev, resource_desc check_new_res, uint64_t handle)
 {
@@ -460,7 +482,7 @@ void log_resource_created(std::string texture_name, device* dev, resource_desc c
 		// display resource info
 		std::stringstream s;
 		s << "addon - create resource for " << texture_name  << ":, type: " << to_string(check_new_res.type) << ", src handle =" << std::hex << handle << ", draw =" << a_shared.count_display;
-
+		/*
 		switch (check_new_res.type) {
 		default:
 		case reshade::api::resource_type::unknown:
@@ -480,6 +502,8 @@ void log_resource_created(std::string texture_name, device* dev, resource_desc c
 			break;
 		}
 		s << ";";
+		*/
+		log_texture(&s, check_new_res);
 		reshade::log::message(reshade::log::level::info, s.str().c_str());
 		s.str("");
 		s.clear();
@@ -546,6 +570,15 @@ void log_copy_texture(std::string texture_name, uint64_t handle)
 	{
 		std::stringstream s;
 		s << " = >  resource and view(s) copied for " << texture_name << ", src res.hande = " << std::hex << handle << ", for draw (" << a_shared.count_display << ");";
+		
+		auto it = a_shared.copied_textures.find(handle);
+		if (it != a_shared.copied_textures.end())
+		{
+			resource texure = it->second.texresource;
+			resource_desc check_new_res = g_shared_state->device->get_resource_desc(texure);
+			log_texture(&s, check_new_res);
+		}
+
 		reshade::log::message(reshade::log::level::info, s.str().c_str());
 
 	}
@@ -832,7 +865,11 @@ void log_export_texture(short int display_to_use)
 	if (g_shared_state->debug_log && flag_capture)
 	{
 		std::stringstream s;
-		s << " => on_push_descriptors : export pre processor DEPTH and STENCIL texture for display_to_use = " << display_to_use << ";";
+		if (a_shared.cb_inject_values.AAMode == 1.0)
+			s << " => on_push_descriptors : export pre processor DEPTH and STENCIL texture for display_to_use = " << display_to_use << ";";
+
+		if (a_shared.cb_inject_values.AAMode == 2.0 || a_shared.cb_inject_values.AAMode == 4.0)
+			s << " => on_push_descriptors : export pre processor DEPTH_MSAA and STENCIL_MSAA texture for display_to_use = " << display_to_use << ";";
 
 		reshade::log::message(reshade::log::level::warning, s.str().c_str());
 	}

@@ -312,60 +312,6 @@ void enumerateTechniques(effect_runtime* runtime)
     }
 }
 
-// *******************************************************************************************************
-/// <summary>
-/// Called for every technique change => set refresh of technique
-/// </summary>
-/// 
-
-/*
-bool onReshadeSetTechniqueState(effect_runtime* runtime, effect_technique technique, bool enabled) {
-
-    // request update of shader if not VR only
-    if (!shared_data.VRonly_technique)
-        shared_data.button_technique = true;
-
-    // let things as requested
-    return false;
-}
-*/
-
-// *******************************************************************************************************
-/// <summary>
-/// Disable all techniques
-/// </summary>
-/// 
-/*
-void disableAllTechnique(bool save_flag) {
-
-    // disable all active techniques
-    for (int i = 0; i < shared_data.technique_vector.size(); ++i)
-        shared_data.runtime->set_technique_state(shared_data.technique_vector[i].technique, false);
-
-    //enable VR only technique
-    if (shared_data.VR_only_technique_handle != 0)
-        shared_data.runtime->set_technique_state(shared_data.VR_only_technique_handle, true);
-    
-}
-*/
-// *******************************************************************************************************
-/// <summary>
-/// Re enable all techniques
-/// </summary>
-/// 
-/*
-void reEnableAllTechnique(bool save_flag) {
-
-    // enable all active techniques
-    for (int i = 0; i < shared_data.technique_vector.size(); ++i)
-        shared_data.runtime->set_technique_state(shared_data.technique_vector[i].technique, true);
-
-    //disable VR only technique
-    if (shared_data.VR_only_technique_handle != 0 )
-        shared_data.runtime->set_technique_state(shared_data.VR_only_technique_handle, false);
-
-}
-*/
 
 // *******************************************************************************************************
 /// <summary>
@@ -384,14 +330,27 @@ void render_technique(short int display_to_use, command_list* cmd_list) {
         {
             
             // export DEPTH and STENCIL once for all effects (must be done in 2D too !!)
-            // update DEPTH texture
-            
-            if (a_shared.copied_textures[current_DepthStencil_handle].texresource_view.handle!=0)
-                g_shared_state->runtime->update_texture_bindings("DEPTH", a_shared.copied_textures[current_DepthStencil_handle].texresource_view, a_shared.copied_textures[current_DepthStencil_handle].texresource_view);
-            // update STENCIL texture
-            if (a_shared.copied_textures[current_DepthStencil_handle].texresource_view_stencil.handle != 0)
-                g_shared_state->runtime->update_texture_bindings("STENCIL", a_shared.copied_textures[current_DepthStencil_handle].texresource_view_stencil, a_shared.copied_textures[current_DepthStencil_handle].texresource_view_stencil);
-               
+
+            // no MSAA
+            if (a_shared.cb_inject_values.AAMode == 1.0)
+            {
+                // update DEPTH texture
+                if (a_shared.copied_textures[current_DepthStencil_handle].texresource_view.handle != 0)
+                    g_shared_state->runtime->update_texture_bindings("DEPTH", a_shared.copied_textures[current_DepthStencil_handle].texresource_view, a_shared.copied_textures[current_DepthStencil_handle].texresource_view);
+                // update STENCIL texture
+                if (a_shared.copied_textures[current_DepthStencil_handle].texresource_view_stencil.handle != 0)
+                    g_shared_state->runtime->update_texture_bindings("STENCIL", a_shared.copied_textures[current_DepthStencil_handle].texresource_view_stencil, a_shared.copied_textures[current_DepthStencil_handle].texresource_view_stencil);
+            }
+            // MSAA 2x ou 4x
+            else if (a_shared.cb_inject_values.AAMode == 2.0 || a_shared.cb_inject_values.AAMode == 4.0)
+            {
+                // update DEPTH texture
+                if (a_shared.copied_textures[current_DepthStencil_handle].texresource_view.handle != 0)
+                    g_shared_state->runtime->update_texture_bindings("DEPTH_MSAA", a_shared.copied_textures[current_DepthStencil_handle].texresource_view, a_shared.copied_textures[current_DepthStencil_handle].texresource_view);
+                // update STENCIL texture
+                if (a_shared.copied_textures[current_DepthStencil_handle].texresource_view_stencil.handle != 0)
+                    g_shared_state->runtime->update_texture_bindings("STENCIL_MSAA", a_shared.copied_textures[current_DepthStencil_handle].texresource_view_stencil, a_shared.copied_textures[current_DepthStencil_handle].texresource_view_stencil);
+            }
            
 #if _DEBUG_LOGS
             log_export_texture(display_to_use);

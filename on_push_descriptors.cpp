@@ -118,7 +118,6 @@ void get_texture(command_list* cmd_list, shader_stage stages, pipeline_layout la
 	// get mask from ext plane  PS, filter by the number of resource
 	if (a_shared.last_feature == Feature::GetStencil && update.count == 6)
 	{
-
 		// in some case the resource view handle is null, skip these cases
 		// as this is a depth stencil texture, 2 resource view will be created
 		if (reinterpret_cast<const reshade::api::resource_view*>(update.descriptors)[3].handle != 0)

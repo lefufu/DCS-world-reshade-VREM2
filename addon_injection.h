@@ -59,29 +59,29 @@ struct ShaderInjectData {
 	float testGlobal; //0.z
 	float disable_video_IHADSS; //0.w
 	float count_display; //1.x
-	float mapMode = 1.0; //1.y
+	float mapMode; //1.y
 	float VRMode; //1.z
 	float maskLabels; //1.w
 	float hazeReduction; //2.x => used in asm !
 	float noReflect; //2.y
-	float cockpitSat; //2.z
-	float cockpitMul = 1.0; //2.w
-	float cockpitAdd; //3.x
-	float extSat; //3.y
-	float extMul = 1.0; //3.z
-	float extAdd; //3.w
-	float colorFlag; //4.x
-	float fSharpenIntensity; //4.y
-	float lumaFactor; //4.z
-	float sharpenFlag; //4.w
-	float debandFlag; //5.x
-	float Threshold; //5.y
-	float Range; //5.z
-	float Iterations; //5.w
-	float Grain; //6.x
+	float AAMode; //2.z
+	float empty2; //2.w
+	float empty3; //3.x
+	float empty4; //3.y
+	float empty5; //3.z
+	float empty6; //3.w
+	float empty7; //4.x
+	float empty8; //4.y
+	float empty9; //4.z
+	float empty10; //4.w
+	float empty11; //5.x
+	float empty12; //5.y
+	float empty13; //5.z
+	float empty14; //5.w
+	float empty15; //6.x
 	float frame_counter; //6.y
-	float AAxFactor = 1.0; //6.z => to be injected in shaders, contain all super and under sampling values, at the opposite of MSAAxfactor only for technique and only for MSAA
-	float AAyFactor = 1.0; //6.w => to be injected in shaders, at the opposite of MSAAyfactor only for technique, at the opposite of MSAAxfactor only for technique and only for MSAA
+	float AAxFactor; //6.z => to be injected in shaders, contain all super and under sampling values, at the opposite of MSAAxfactor only for technique and only for MSAA
+	float AAyFactor; //6.w => to be injected in shaders, at the opposite of MSAAyfactor only for technique, at the opposite of MSAAxfactor only for technique and only for MSAA
 	float IHADSSxOffset; //7.x
 	float IHADSSBoresight; //7.y
 	float IHADSSNoLeft; //7.z
