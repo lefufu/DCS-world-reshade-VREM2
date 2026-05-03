@@ -128,44 +128,51 @@ uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pip
 	src_resource_view_texture = static_cast<const reshade::api::resource_view*>(update.descriptors)[dec_number];
 
 	resource scr_resource = dev->get_resource_from_view(src_resource_view_texture);
-	resource_desc src_resource_desc = dev->get_resource_desc(scr_resource);
-
-	//share AA Mode (1 = no MSAA, 2 = MSAA2x, 4 = MSAA4x)
-	a_shared.cb_inject_values.AAMode = static_cast<float>(src_resource_desc.texture.samples);
-
 	// create target resource once per game session, for each source resource 
 	bool resource_found = false;
 
-	auto it = a_shared.copied_textures.find(scr_resource.handle);
-	if (it == a_shared.copied_textures.end()) {
+	if (scr_resource.handle != 0)
+	{
+		
+		resource_desc src_resource_desc = dev->get_resource_desc(scr_resource);
 
-		//create the entry to host resource and resource views and store it in a_shared.copied_textures
-		resource_DS_copy text_copy = {};
+		/* moved to upper leve
+		//share AA Mode (1 = no MSAA, 2 = MSAA2x, 4 = MSAA4x)
+		a_shared.cb_inject_values.AAMode = static_cast<float>(src_resource_desc.texture.samples);
+		*/
 
-		// create a new single ressource containing stencil and depth
+
+		auto it = a_shared.copied_textures.find(scr_resource.handle);
+
+		if (it == a_shared.copied_textures.end()) {
+
+			//create the entry to host resource and resource views and store it in a_shared.copied_textures
+			resource_DS_copy text_copy = {};
+
+			// create a new single ressource containing stencil and depth
 #if _DEBUG_LOGS
 		log_creation_start(textName);
 #endif
 
-		bool status = dev->create_resource(src_resource_desc, nullptr, resource_usage::shader_resource, &text_copy.texresource, nullptr);
-		if (!status)
-		{
-			//error when creating resource or resource view
-			log_error_creating_view();
-		}
-		else
-		{
-			// create resources view on the copied resource
-			text_copy.texresource_view = copy_resource_view(dev, src_resource_view_texture, text_copy.texresource);
-
-
-			if (text_copy.texresource_view.handle != 0)
+			bool status = dev->create_resource(src_resource_desc, nullptr, resource_usage::shader_resource, &text_copy.texresource, nullptr);
+			if (!status)
 			{
-				//detect if depth stencil texture to create the second resource view for stencil
-				bool depth_stencil_texture = false;
-				reshade::api::format stencil_format;
-				switch(src_resource_desc.texture.format)
+				//error when creating resource or resource view
+				log_error_creating_view();
+			}
+			else
+			{
+				// create resources view on the copied resource
+				text_copy.texresource_view = copy_resource_view(dev, src_resource_view_texture, text_copy.texresource);
+
+
+				if (text_copy.texresource_view.handle != 0)
 				{
+					//detect if depth stencil texture to create the second resource view for stencil
+					bool depth_stencil_texture = false;
+					reshade::api::format stencil_format;
+					switch (src_resource_desc.texture.format)
+					{
 					case reshade::api::format::r32_g8_typeless:
 					{
 						depth_stencil_texture = true;
@@ -184,52 +191,60 @@ uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pip
 						stencil_format = reshade::api::format::x32_float_g8_uint;
 						break;
 					}
-				}
-				//handle case with depth stencil texture : create the second resource view for the stencil
-				if (depth_stencil_texture)
-				{
-					resource_view_desc srcv_desc = dev->get_resource_view_desc(src_resource_view_texture);
+					}
 
-					resource_view_desc stencil_desc = {};
-					//stencil_desc.type = resource_view_type::texture_2d;
-					stencil_desc.type = srcv_desc.type; // same type as original view
-					stencil_desc.format = stencil_format;
+					//handle case with depth stencil texture : create the second resource view for the stencil
+					if (depth_stencil_texture)
+					{
+						resource_view_desc srcv_desc = dev->get_resource_view_desc(src_resource_view_texture);
 
-					/*
-					stencil_desc.texture.level_count = 1;
-					stencil_desc.texture.first_level = 0;
-					stencil_desc.texture.layer_count = 1;
-					stencil_desc.texture.first_layer = 0;
-					*/
-					
-					stencil_desc.texture.level_count = srcv_desc.texture.level_count;
-					stencil_desc.texture.first_level = srcv_desc.texture.first_level;
-					stencil_desc.texture.layer_count = srcv_desc.texture.layer_count;
-					stencil_desc.texture.first_layer = srcv_desc.texture.first_layer;
+						resource_view_desc stencil_desc = {};
+						//stencil_desc.type = resource_view_type::texture_2d;
+						stencil_desc.type = srcv_desc.type; // same type as original view
+						stencil_desc.format = stencil_format;
 
-					bool stencil_status = dev->create_resource_view(
-						text_copy.texresource,
-						resource_usage::shader_resource,
-						stencil_desc,
-						&text_copy.texresource_view_stencil
-					);
-				}
-							
-				// store new elements for copied resource
-				a_shared.copied_textures.emplace(scr_resource.handle, text_copy);
-				resource_found = true;
+						/*
+						stencil_desc.texture.level_count = 1;
+						stencil_desc.texture.first_level = 0;
+						stencil_desc.texture.layer_count = 1;
+						stencil_desc.texture.first_layer = 0;
+						*/
+
+						stencil_desc.texture.level_count = srcv_desc.texture.level_count;
+						stencil_desc.texture.first_level = srcv_desc.texture.first_level;
+						stencil_desc.texture.layer_count = srcv_desc.texture.layer_count;
+						stencil_desc.texture.first_layer = srcv_desc.texture.first_layer;
+
+						bool stencil_status = dev->create_resource_view(
+							text_copy.texresource,
+							resource_usage::shader_resource,
+							stencil_desc,
+							&text_copy.texresource_view_stencil
+						);
+					}
+					//other textures
+					else
+					{
+						
+					}
+
+					// store new elements for copied resource
+					a_shared.copied_textures.emplace(scr_resource.handle, text_copy);
+					resource_found = true;
 #if _DEBUG_LOGS
-				log_resource_created(textName, dev, src_resource_desc, scr_resource.handle);
-				log_resource_view_created(textName, dev, text_copy.texresource_view, text_copy.texresource_view_stencil, scr_resource.handle);
+					log_resource_created(textName, dev, src_resource_desc, scr_resource.handle);
+					log_resource_view_created(textName, dev, text_copy.texresource_view, text_copy.texresource_view_stencil, scr_resource.handle);
 #endif
+				}
 			}
+		}
+		else
+		{
+			resource_found = true;
 		}
 
 	}
-	else
-	{
-		resource_found = true;
-	}
+
 
 
 	if (resource_found)

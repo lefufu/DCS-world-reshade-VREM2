@@ -165,6 +165,21 @@ void process_action_injectText(command_list* commandList, std::unordered_map<uin
 		}
 
 	}
+	// inject NS430 texture in t5
+	// check if the current depthStencil is declared
+	auto it_NS430 = a_shared.copied_textures.find(current_NS430_handle);
+	if (it_NS430 != a_shared.copied_textures.end())
+	{
+		
+		if ((it->second.feature == Feature::GUI_MFD) && a_shared.count_display >= 0 && a_shared.copied_textures[current_NS430_handle].copied)
+		{
+			//inject depth texture in t3 and t4 for MSAA0X
+			inject_texture(commandList, 5, current_NS430_handle, "NS430");
+			
+		}
+
+	}
+
 }
 
 //*******************************************************************************
@@ -188,7 +203,8 @@ void process_action_replace(command_list* commandList, pipeline_stage stages, pi
 		log_CB_injected("VREM CB");
 #endif
 	}
-	if (it->second.action & action_replace_bind || ((it->second.action & action_replace) && g_shared_state->debug))
+	// if (it->second.action & action_replace_bind || ((it->second.action & action_replace) && g_shared_state->debug))
+	if (it->second.action & action_replace_bind)
 	{
 		// shader is to be replaced by the new one created in on_Init_Pipeline
 		commandList->bind_pipeline(stages, it->second.substitute_pipeline);
@@ -212,6 +228,19 @@ void process_action_get_text(std::unordered_map<uint64_t, Shader_Definition>::it
 #if _DEBUG_LOGS  
 		// log infos
 		log_start_monitor("ego plane mask");
+#endif
+
+	}
+
+	// track NS430
+	if (it->second.feature == Feature::NS430 && !a_shared.not_track_mask_anymore)
+	{
+		//set flag to get mask texture at next push_descriptors
+		track_for_texture = true;
+
+#if _DEBUG_LOGS  
+		// log infos
+		log_start_monitor("NS430");
 #endif
 
 	}
@@ -276,6 +305,24 @@ void process_action_trackRT(std::unordered_map<uint64_t, Shader_Definition>::ite
 }
 
 //*******************************************************************************
+// setup flags skip draw
+void process_action_skip(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
+{
+	if (it->second.feature == Feature::NS430 && a_shared.cb_inject_values.NS430Flag)
+	{
+		//set flag to get mask texture at next push_descriptors
+		do_not_draw = true;
+
+#if _DEBUG_LOGS  
+		// log infos
+		log_start_monitor("ego plane mask");
+#endif
+
+	}
+}
+
+
+//*******************************************************************************
 // setup flags to render technique
 void process_action_renderTechnique(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
@@ -294,7 +341,6 @@ void process_action_renderTechnique(std::unordered_map<uint64_t, Shader_Definiti
 		}
 	}
 }
-
 
 //*******************************************************************************
 // inject modified CB (not used in IL2 yet, keep only for future DCS VREM2 mod)
@@ -481,6 +527,9 @@ extern "C" {
 
 			// inject modified CB (modifed or restored version)
 			if (it->second.action & action_injectCB) process_action_injectCB(commandList, it);
+
+			// skp rendering by not drawing if the shader is to be skipped
+			if (it->second.action & action_skip) process_action_skip(it);
 
 			// trace current feature for next call
 			a_shared.last_feature = it->second.feature;

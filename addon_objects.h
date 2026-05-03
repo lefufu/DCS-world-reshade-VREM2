@@ -273,15 +273,26 @@ constexpr uint8_t SET_STOPWATCH = 11;
 //*****************************************************************************
 // Key mapping
 //pilote note on/off: K
-static const uint32_t VK_PILOTE_NOTE = 0x4B; //'k'
+/*static const uint32_t VK_PILOTE_NOTE = 0x4B; //'k'
 static const uint32_t VK_PILOTE_NOTE_MOD = VK_SHIFT;
 static const uint32_t VK_TEST_VS = VK_DIVIDE;
 static const uint32_t VK_NIGHT_MODE = 0x55; //'u'
 static const uint32_t VK_NIGHT_MODE_MOD = VK_CONTROL;
 static const uint32_t VK_STOPWATCH = 0x4A; // 'j'
 static const uint32_t VK_STOPWATCH_MOD_START = VK_SHIFT;
-static const uint32_t VK_STOPWATCH_MOD_RESET = VK_CONTROL;
+static const uint32_t VK_STOPWATCH_MOD_RESET = VK_CONTROL; */
 
+static const uint32_t VK_TADS_VIDEO = VK_F6;
+static const uint32_t VK_TADS_VIDEO_MOD = VK_MENU;
+
+static const uint32_t VK_IHADSS_BORE = VK_F8;
+static const uint32_t VK_IHADSS_BORE_MOD = VK_MENU;
+
+static const uint32_t VK_IHADSS_NOLEFT = VK_F10;
+static const uint32_t VK_IHADSS_NOLEFT_MOD = VK_MENU;
+
+static const uint32_t VK_NS430 = VK_F5;
+static const uint32_t VK_NS430_MOD = VK_MENU;
 
 
 //*****************************************************************************
@@ -513,9 +524,10 @@ extern bool do_not_draw;
 inline bool track_for_texture = false;
 
 // current depth Stencil handle
-//inline uint64_t current_depth_handle =0;
 inline uint64_t current_DepthStencil_handle = 0;
-//current texture handle
+
+// current NS430 Stencil handle
+inline uint64_t current_NS430_handle = 0;
 
 //inline uint64_t current_Photo_handle = 0;
 // not used but maintained for code compilation
@@ -532,79 +544,86 @@ inline uint64_t current_RTV_handle = 0;
 
 inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 {
-
 	// ** fix for rotor **
 	{0xC0CC8D69, Shader_Definition(action_replace_bind, Feature::Rotor, L"AH64_rotorPS.cso", 0, {SET_HELO})},
 	{ 0x349A1054, Shader_Definition(action_replace_bind, Feature::Rotor, L"AH64_rotor2PS.cso", 0, {SET_HELO}) },
-	{ 0xD3E172D4, Shader_Definition(action_replace_bind, Feature::Rotor, L"UH1_rotorPS.cso", 0, {SET_HELO}) },
+	//this shader is making the game crashing on reload if action_replace_bind !!!
+	{ 0xD3E172D4, Shader_Definition(action_replace, Feature::Rotor, L"UH1_rotorPS.cso", 0, {SET_HELO}) },
 	// ** fix for IHADSS **
 	{ 0x2D713734, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_PNVS_PS.cso", 0, {SET_HELO}) },
 	{ 0xDF141A84, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_PS.cso", 0, {SET_HELO}) },
 	{ 0x45E221A9, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_VS.cso", 0, {SET_HELO}) },
 
 	// to start spying texture for depthStencil (Vs associated with global illumination PS)
-	// and inject modified CB CperFrame (all MSAA supported)
-	{ 0x4DDC4917, Shader_Definition(action_log |action_get_text| action_injectCB, Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
+// and inject modified CB CperFrame (all MSAA supported)
+{ 0x4DDC4917, Shader_Definition(action_log | action_get_text | action_injectCB, Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
 
-	//sky inject modified CB CperFrame
-	{ 0x57D037A0, Shader_Definition(action_injectCB, Feature::Sky, L"", 0, {SET_MISC}) },
+//sky inject modified CB CperFrame
+{ 0x57D037A0, Shader_Definition(action_injectCB, Feature::Sky, L"", 0, {SET_MISC}) },
 
-	// global PS for all changes
-	{ 0xBAF1E52F, Shader_Definition(action_replace | action_injectText, Feature::Global, L"global_PS_2.cso", 0, {SET_MISC}) },
+// global PS for all changes
+{ 0xBAF1E52F, Shader_Definition(action_replace | action_injectText, Feature::Global, L"global_PS_2.cso", 0, {SET_MISC}) },
 
-	// VS associated with global PS 2, trigger draw increase (not in PS to be more DCS settings independant) and engage render technique if 2D mode 
-	{ 0x8DB626CD, Shader_Definition(action_log | action_renderTechnique , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
-	/*
-	{ 0x8DB626CD, Shader_Definition(action_log , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
-	*/
-	// render technique before GUI (VR only)
-	{ 0x6656f8a6 , Shader_Definition(action_renderTechnique, Feature::VS_global1, L"", 0, {SET_DEFAULT}) },
-	{ 0x936b2b6a , Shader_Definition(action_renderTechnique, Feature::VS_global1_MSAA, L"", 0, {SET_DEFAULT}) },
+// VS associated with global PS 2, trigger draw increase (not in PS to be more DCS settings independant) and engage render technique if 2D mode
+{ 0x8DB626CD, Shader_Definition(action_log | action_renderTechnique , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
+//
+//{ 0x8DB626CD, Shader_Definition(action_log , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
+//
+// render technique before GUI (VR only)
+{ 0x6656f8a6 , Shader_Definition(action_renderTechnique, Feature::VS_global1, L"", 0, {SET_DEFAULT}) },
+{ 0x936b2b6a , Shader_Definition(action_renderTechnique, Feature::VS_global1_MSAA, L"", 0, {SET_DEFAULT}) },
 
-	// Label PS 
-	{ 0x6CEA1C47, Shader_Definition(action_replace_bind | action_injectText, Feature::Label , L"labels_PS.cso", 0, {SET_MISC}) },
-	// ** NS430 **
-	// to start spying texture for screen texture and disable frame (Vs associated with NS430 screen PS below)
-	{ 0x52C97365, Shader_Definition(action_replace_bind, Feature::NS430, L"VR_GUI_MFD_VS.cso", 0, {SET_NS430}) },
-	// to start spying texture for screen texture (Vs associated with NS430 screen EDF9F8DD for su25T&UH1, not same res. texture !)
-	{ 0x8439C716, Shader_Definition(action_log, Feature::NS430, L"", 0, {SET_NS430}) },
-	// inject texture in global GUI and filter screen display (same shader for both)
-	// could be used to track render target for alternate VR rendering, exists also in UH1 ?
-	{ 0x99D562, Shader_Definition(action_replace_bind | action_injectText, Feature::GUI_MFD, L"VR_GUI_MFD_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
-	// disable NS430 frame, shared with some cockpit parts (can not be done by skip)
-	{ 0xEFD973A1, Shader_Definition(action_replace_bind, Feature::NS430 , L"NS430__framePS.cso", 0, {SET_NS430}) },
-	// disable NS430 screen background (done in shader because shared with other objects than NS430)
-	{ 0x6EF95548, Shader_Definition(action_replace_bind, Feature::NS430, L"NS430_screen_back.cso", 0, {SET_NS430}) },
-	// to filter out call for GUI and MFD
-	// use also to get RT in VR !
-	{ 0x55288581, Shader_Definition(action_log, Feature::GUI, L"", 0, {SET_DEFAULT}) },
-	//  ** identify game config **
-	// to define if VR is active or not (2D mirror view of VR )
-	{ 0x886E31F2, Shader_Definition(action_log, Feature::VRMode, L"", 0, {SET_DEFAULT}) },
-	// VS drawing cockpit parts to define if view is in welcome screen or map
-	{ 0xA337E177, Shader_Definition(action_log, Feature::mapMode, L"", 0, {SET_DEFAULT}) },
+// Label PS
+{ 0x6CEA1C47, Shader_Definition(action_replace_bind | action_injectText, Feature::Label , L"labels_PS.cso", 0, {SET_MISC}) },
+// ** NS430 **
+// to inject convergence
+{ 0x52C97365, Shader_Definition(action_replace_bind, Feature::NS430, L"VR_GUI_MFD_VS.cso", 0, {SET_NS430}) },
+// to start spying texture for screen texture (Vs associated with NS430 screen EDF9F8DD for su25T&UH1, not same res. texture !)
+{ 0x8439C716, Shader_Definition(action_get_text, Feature::NS430, L"", 0, {SET_NS430}) },
+// inject texture in global GUI and filter screen display (same shader for both)
+// 
+// could be used to track render target for alternate VR rendering, exists also in UH1 ?
+//{ 0x99D562, Shader_Definition(action_replace_bind | action_injectText, Feature::GUI_MFD, L"VR_GUI_MFD_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
+// new PS to use ?
+// { 0xDB7FE106, Shader_Definition(action_replace_bind | action_injectText, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
+// { 0xDB7FE106, Shader_Definition(action_replace_bind, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
 
-	//  ** reflection on instrument, done by GCOCKPITIBL of CperFrame **
-	// A10C PS 
-	{ 0xECF6610, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
-	// AH64 + F4 PS 
-	//{ 0x7BB48FB, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
-	{ 0x485b58ba, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
+// these 2 shaders are making the game crashing if action_replace_bind !!!
+// disable NS430 frame, shared with some cockpit parts (can not be done by skip)
+//{ 0xEFD973A1, Shader_Definition(action_replace, Feature::NS430 , L"NS430__framePS.cso", 0, {SET_NS430}) },
+{ 0xEFD973A1, Shader_Definition(action_skip, Feature::NS430 , L"", 0, {SET_NS430}) },
+// disable NS430 screen background (done in shader because shared with other objects than NS430) => no more needed
+//{ 0x6EF95548, Shader_Definition(action_replace, Feature::NS430, L"NS430_screen_back.cso", 0, {SET_NS430}) },
+// to filter out call for GUI and MFD
+// use also to get RT in VR !
+{ 0x55288581, Shader_Definition(action_log, Feature::GUI, L"", 0, {SET_DEFAULT}) },
+//  ** identify game config **
+// to define if VR is active or not (2D mirror view of VR )
+{ 0x886E31F2, Shader_Definition(action_log, Feature::VRMode, L"", 0, {SET_DEFAULT}) },
+// VS drawing cockpit parts to define if view is in welcome screen or map
+{ 0xA337E177, Shader_Definition(action_log , Feature::mapMode, L"", 0, {SET_DEFAULT}) },
 
-	//  ** NVG **
-	{ 0xE65FAB66, Shader_Definition(action_replace_bind , Feature::NVG , L"NVG_extPS.cso", 0, {SET_NVG}) },
+//  ** reflection on instrument, done by GCOCKPITIBL of CperFrame **
+// A10C PS
+{ 0xECF6610, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
+// AH64 + F4 PS
+//{ 0x7BB48FB, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
+{ 0x485b58ba, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
 
-	//  ** identify render target ** (VS associated with first global PS below GUI), VR only
-	{ 0xb034e6a5, Shader_Definition(action_track_RT , Feature::GlobalVS1 , L"", 0, {SET_TECHNIQUE}) },
-	/*
-	//  ** identify render target ** (same than previous mod), VR only
-	{ 0x936B2B6A, Shader_Definition(action_track_RT , Feature::GlobalVS1b , L"", 0, {SET_TECHNIQUE}) },
-	*/
-	//  ** identify render target ** (VS associated with first global PS), VR only
-	{ 0x5f6a14bd, Shader_Definition(action_track_RT , Feature::GlobalVS1b , L"", 0, {SET_TECHNIQUE}) },
+//  ** NVG **
+{ 0xE65FAB66, Shader_Definition(action_replace_bind , Feature::NVG , L"NVG_extPS.cso", 0, {SET_NVG}) },
 
-	//to test texture dump, VS associated with welcome screen Icons PS
-	// { 0x77c784e1, Shader_Definition(action_log | action_dump , Feature::Testing , L"", 0, {SET_DEFAULT}) },
+//  ** identify render target ** (VS associated with first global PS below GUI), VR only
+{ 0xb034e6a5, Shader_Definition(action_track_RT , Feature::GlobalVS1 , L"", 0, {SET_TECHNIQUE}) },
+
+//  ** identify render target ** (same than previous mod), VR only
+//{ 0x936B2B6A, Shader_Definition(action_track_RT , Feature::GlobalVS1b , L"", 0, {SET_TECHNIQUE}) },
+
+//  ** identify render target ** (VS associated with first global PS), VR only
+{ 0x5f6a14bd, Shader_Definition(action_track_RT , Feature::GlobalVS1b , L"", 0, {SET_TECHNIQUE}) },
+
+//to test texture dump, VS associated with welcome screen Icons PS
+//{ 0xa337e177, Shader_Definition(action_log | action_dump , Feature::Testing , L"", 0, {SET_DEFAULT}) },
 
 };
 
@@ -617,6 +636,8 @@ inline std::unordered_map<std::string, int> settings_mapping = {
 	{"set_misc", SET_MISC},
 	{"set_technique", SET_TECHNIQUE },
 	{"set_helo", SET_HELO },
+	{"set_nvg", SET_NVG },
+	{"set_ns430", SET_NS430 },
 };
 
 //variables 
@@ -633,4 +654,10 @@ static const std::unordered_map<std::string, float*> var_mapping = {
 	{"var_TADSDay", &a_shared.cb_inject_values.TADSDay},
 	{"var_TADSNight", &a_shared.cb_inject_values.TADSNight},
 	{"var_IHADSSxOffset", &a_shared.cb_inject_values.IHADSSxOffset},
+	{"var_ns430scale", &a_shared.cb_inject_values.NS430Scale},
+	{"var_ns430xpos", &a_shared.cb_inject_values.NS430Xpos},
+	{"var_ns430ypos", &a_shared.cb_inject_values.NS430Ypos},
+	{"var_ns430convergence", &a_shared.cb_inject_values.NS430Convergence},
+	{"var_ns430guiyScale", &a_shared.cb_inject_values.GUIYScale},
+		
 };

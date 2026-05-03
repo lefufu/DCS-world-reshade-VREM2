@@ -111,8 +111,6 @@ void get_texture(command_list* cmd_list, shader_stage stages, pipeline_layout la
 	//log infos
 	log_push_descriptor(stages, layout, param_index, update);
 #endif
-
-
 	device* dev = cmd_list->get_device();
 
 	// get mask from ext plane  PS, filter by the number of resource
@@ -125,6 +123,29 @@ void get_texture(command_list* cmd_list, shader_stage stages, pipeline_layout la
 
 			// to retrieve infos for pushing texture in bind_pipeline
 			current_DepthStencil_handle = copy_texture_from_desc(cmd_list, stages, layout, param_index, update, 3, "DepthStencil");
+
+			//update MSAA mode
+			reshade::api::resource_view src_resource_view_texture;
+			src_resource_view_texture = static_cast<const reshade::api::resource_view*>(update.descriptors)[3];
+			resource scr_resource = dev->get_resource_from_view(src_resource_view_texture);
+			resource_desc src_resource_desc = dev->get_resource_desc(scr_resource);
+			//share AA Mode (1 = no MSAA, 2 = MSAA2x, 4 = MSAA4x)
+			a_shared.cb_inject_values.AAMode = static_cast<float>(src_resource_desc.texture.samples);
+		}
+
+	}
+
+	// get NS430 screen
+	if (a_shared.last_feature == Feature::NS430 && update.count == 1)
+	{
+		
+		//reshade::log::message(reshade::log::level::info, "**** tracking texture for NS430 *****");
+		// in some case the resource view handle is null, skip these cases
+		// as this is a depth stencil texture, 2 resource view will be created
+		if (reinterpret_cast<const reshade::api::resource_view*>(update.descriptors)[0].handle != 0)
+		{
+			// to retrieve infos for pushing texture in bind_pipeline
+			current_NS430_handle = copy_texture_from_desc(cmd_list, stages, layout, param_index, update, 0, "NS430");
 		}
 
 	}
