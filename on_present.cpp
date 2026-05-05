@@ -78,6 +78,7 @@ void intialize_counters()
 
     a_shared.current_photo_number = 0;
 
+	last_RTV_saved.copied = false;
     // initialize flags for texture copy
     current_DepthStencil_handle = 0;
     for (auto& [handle, ds_copy] : a_shared.copied_textures) {
@@ -94,6 +95,58 @@ void intialize_counters()
 void handle_keypress(effect_runtime* runtime)
 {
 
+    //IHADSS
+    if (runtime->is_key_pressed(VK_TADS_VIDEO) && runtime->is_key_down(VK_TADS_VIDEO_MOD))
+    {
+        // Toggle the value of disable_video_IHADSS between 0.0 and 1.0
+        if (a_shared.cb_inject_values.disable_video_IHADSS == 1.0)
+        {
+            a_shared.cb_inject_values.disable_video_IHADSS = 0.0;
+        }
+        else if (a_shared.cb_inject_values.disable_video_IHADSS == 0.0)
+        {
+            a_shared.cb_inject_values.disable_video_IHADSS = 1.0;
+        }
+    }
+
+    if (runtime->is_key_pressed(VK_IHADSS_BORE) && runtime->is_key_down(VK_IHADSS_BORE_MOD))
+    {
+        // Toggle the value of disable_video_IHADSS between 0.0 and 1.0
+        if (a_shared.cb_inject_values.IHADSSBoresight == 1.0)
+        {
+            a_shared.cb_inject_values.IHADSSBoresight = 0.0;
+        }
+        else if (a_shared.cb_inject_values.IHADSSBoresight == 0.0)
+        {
+            a_shared.cb_inject_values.IHADSSBoresight = 1.0;
+        }
+    }
+    
+    if (runtime->is_key_pressed(VK_IHADSS_NOLEFT) && runtime->is_key_down(VK_IHADSS_NOLEFT_MOD))
+    {
+        // Toggle the value of disable_video_IHADSS between 0.0 and 1.0
+        if (a_shared.cb_inject_values.IHADSSNoLeft == 1.0)
+        {
+            a_shared.cb_inject_values.IHADSSNoLeft  = 0.0;
+        }
+        else if (a_shared.cb_inject_values.IHADSSNoLeft == 0.0)
+        {
+            a_shared.cb_inject_values.IHADSSNoLeft = 1.0;
+        }
+    }
+    //NS430
+    if (runtime->is_key_pressed(VK_NS430) && runtime->is_key_down(VK_NS430_MOD))
+    {
+        // Toggle the value of disable_video_IHADSS between 0.0 and 1.0
+        if (a_shared.cb_inject_values.NS430Flag == 1.0)
+        {
+            a_shared.cb_inject_values.NS430Flag = 0.0;
+        }
+        else if (a_shared.cb_inject_values.NS430Flag == 0.0)
+        {
+            a_shared.cb_inject_values.NS430Flag = 1.0;
+        }
+    }
     /*
     //example on handling "hold" feature => effect is triggered only when key is pressed
     if (runtime->is_key_down(VK_F1) && runtime->is_key_down(VK_SHIFT))
@@ -168,6 +221,7 @@ extern "C" {
                 g_shared_state->filtered_pipeline_to_setup = setup_filtered_pipelines(g_shared_state->device, runtime);
             }
 
+			g_shared_state->filtered_pipeline_to_setup = false;													   
             //read texture from file
             if (a_shared.texture_to_read)
             {
@@ -232,8 +286,6 @@ extern "C" {
 
 		//force capture for testing
         // flag_capture = true;
-
-        reshade::log::message(reshade::log::level::info, "addon - vrem_on_reshade_present ending");
 
 #if _DEBUG_CRASH  
         reshade::log::message(reshade::log::level::info, "addon - vrem_on_reshade_present ending");

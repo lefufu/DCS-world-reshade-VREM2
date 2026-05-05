@@ -66,7 +66,7 @@ bool load_shader_code_static(device_api device_type, shader_desc& orig_desc)
 	}
 
 	//do static replacement of shader code only if not in debug mode, otherwise dynamic replacement is forced in on_bind_pipeline
-	if (!g_shared_state->debug)
+	//if (!g_shared_state->debug)
 	{
 		uint32_t shader_hash = calculateShaderHash(orig_desc);
 		//check if hash is in shader_by_hash
@@ -121,7 +121,8 @@ extern "C" {
 		const device_api device_type = device->get_api();
 
 		bool replaced_stages = false;
-#if _DEBUG_CRASH  reshade::log::message(reshade::log::level::info, "addon - vrem_on_create_pipeline starting");
+#if _DEBUG_CRASH  
+		reshade::log::message(reshade::log::level::info, "addon - vrem_on_create_pipeline starting");
 #endif
 		for (uint32_t i = 0; i < subobject_count; ++i)
 		{
@@ -139,7 +140,8 @@ extern "C" {
 			}
 		}
 
-#if _DEBUG_CRASH  reshade::log::message(reshade::log::level::info, "addon - vrem_on_create_pipeline ending");
+#if _DEBUG_CRASH  
+		reshade::log::message(reshade::log::level::info, "addon - vrem_on_create_pipeline ending");
 #endif
 	// Return whether any shader code was replaced
 	return replaced_stages;
