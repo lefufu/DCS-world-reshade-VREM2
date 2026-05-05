@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 //
-// Reshade DCS VREM2 addon. VR Enhancer Mod for IDCS using reshade
+// Reshade IL2 VREM addon. VR Enhancer Mod for IL2 using reshade
 // "hot" reload of mod possible using a Reshade addon as launcher (loaded with the game)
 // and a dll containing the mod logic itselve. Mod settings are in uniforms of a technique
 // 

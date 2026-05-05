@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 //
-// Reshade DCS VREM2 addon. VR Enhancer Mod for IDCS using reshade
+// Reshade IL2 VREM addon. VR Enhancer Mod for IL2 using reshade
 // "hot" reload of mod possible using a Reshade addon as launcher (loaded with the game)
 // and a dll containing the mod logic itselve. Mod settings are in uniforms of a technique
 // 
@@ -96,11 +96,12 @@ static const int MAX_CBSIZE = 152;
 //texture for stopwatch
 inline const wchar_t* STOPWATCH_TEXT_NAME = L"stopwatch.png";
 
-// only one value to save for CPerFrame
+// obsolete : only one value to save for CPerFrame
+/*
 static const int  GATMINTENSITY_SAVE = 0;
 static const int  GCOCKPITIBL_X_SAVE = 1;
 static const int  GCOCKPITIBL_Y_SAVE = 1;
-
+*/
 
 //*****************************************************************************
 // for techniques
@@ -176,73 +177,78 @@ enum class Feature : uint32_t
 {
 	//null
 	Null = 0,
+	// own plane : try to get textures/masks for the user's plane
+	PS_ownPlane = 1,
+	VS_ext_ownPlane = 2,
+	PS_global = 3,
+	VS_global = 4,
+	PS_external = 5,
+	PS_sight = 6,
+	PS_sun = 7,
+	PS_VRMirror = 8,
+	PS_preGlobal = 9,
+	VS_ownPlane = 10,
+	PS_VR_GUI = 11,
+	PS_icon_text = 12,
+	PS_icon = 13,
+	PS_lastGlobal = 14,
+	VS_test = 98,
+	VS_dump = 99,
+	//old things for compatibility
+	/*
 	// Rotor : disable rotor when in cockpit view
-	Rotor = 1,
+	Rotor = 100,
 	// Global : global effects, change color, sharpen, ... for cockpit or outside
-	Global = 2,
+	Global = 200,
 	// Label : mask labels by cockpit frame
-	Label = 3,
+	Label = 300,
 	// Get stencil : copy texture t4 from global illum shader
-	GetStencil = 4,
+	GetStencil = 400,
 	// IHADSS : handle feature for AH64 IHADSS
-	IHADSS = 5,
-	// define if VRMode
-	VRMode = 6,
+	IHADSS = 500,
 	// define if view is in welcome screen or map
-	mapMode = 7,
+	mapMode = 700,
 	// haze control
-	Haze = 8,
+	Haze = 800,
 	// haze control & flag MSAA
-	HazeMSAA2x = 9,
+	HazeMSAA2x = 900,
 	// remove A10C instrument reflect
-	NoReflect = 11,
+	NoReflect = 110,
 	// NS430 
-	NS430 = 12,
+	NS430 = 120,
 	// NVG
-	NVG = 13,
+	NVG = 130,
 	//GUI 
-	GUI = 14,
-	// Reshade effects
-	GlobalVS1 = 15,
-	GlobalVS1b = 16,
-	GUI_MFD = 17,
-	// VS of 1sd global color change PS for VR
-	VS_global1 = 18,
-	VS_global1_MSAA = 19,
-	// VS of 2nd global color change PS
-	VS_global2 = 21,
-	// PS of sky to not modify gAtmInstensity
-	Sky = 22,
-	// VS ofglobal illum MSAA
-	VS_light_MSAA = 23,
+	GUI = 140,
 	// Testing : for testing purpose
-	Testing = 30
+	Testing = 200,
+	// VS of 2nd global color change PS
+	VS_global2 = 210,
+	// PS of sky to not modify gAtmInstensity
+	Sky = 220
+	*/
 };
 
 // mapping between technique name and feature for debug display
 inline std::unordered_map<Feature, std::string> debug_feature_name = {
-	{Feature::Rotor, "Rotor"},
-	{Feature::Global, "Global"},
-	{Feature::Label, "Label"},
-	{Feature::GetStencil, "GetStencil"},
-	{Feature::IHADSS, "IHADSS"},
-	{Feature::VRMode, "VRMode"},
-	{Feature::mapMode, "mapMode"},
-	{Feature::Haze, "Haze"},
-	{Feature::HazeMSAA2x, "HazeMSAA2x"},
-	{Feature::NoReflect, "NoReflect"},
-	{Feature::NS430, "NS430"},
-	{Feature::NVG, "NVG"},
-	{Feature::GUI, "GUI"},
-	{Feature::GlobalVS1, "GlobalVS1"},
-	{Feature::GlobalVS1b, "GlobalVS1b"},
-	{Feature::Testing, "Testing"},
-	{Feature::VS_global2, "VS_global2"},
-	{Feature::VS_global1, "VS_global1"},
-	{Feature::Sky, "Sky"},
-	{Feature::GUI_MFD, "GUI_MFD"},
-	{Feature::VS_global1_MSAA, "VS_global1_MSAA"},
-	{Feature::VS_light_MSAA, "VS_light_MSAA"},
+	{Feature::PS_ownPlane, "PS_ownPlane"},
+	{Feature::VS_ext_ownPlane, "VS_ext_ownPlane"},
+	{Feature::PS_global, "PS_global"},
+	{Feature::VS_global, "VS_global"},
+	{Feature::PS_external, "PS_external"},
+	{Feature::PS_sight, "PS_sight"},
+	{Feature::PS_sun, "PS_sun"},
+	{Feature::PS_VRMirror, "PS_VRMirror"},
+	{Feature::PS_preGlobal, "PS_preGlobal"},
+	{Feature::VS_ownPlane, "VS_ownPlane"},
+	{Feature::PS_icon, "PS_icon"},
+	{Feature::PS_icon_text, "PS_icon_text"},	
+	{Feature::VS_dump, "VS_dump"},
+	{Feature::VS_test, "VS_test"},
+	{Feature::PS_lastGlobal, "PS_lastGlobal"},
+	{Feature::PS_VR_GUI, "PS_VR_GUI"},
+	
+	
 };
 
 //*****************************************************************************
@@ -252,47 +258,37 @@ inline std::unordered_map<Feature, std::string> debug_feature_name = {
 // mapping SETTINGS value are in get_settings_from_uniforms (used to filter activie pipelines)
 // !!! a_shared.VREM_setting[SET_TECHNIQUE] is duplicated in loader_addon_shared as technique list is managed in imgui !!!
 
-static const int SETTINGS_SIZE = 12;
+static const int SETTINGS_SIZE = 11;
 
 constexpr uint8_t SET_DEFAULT = 0;
-constexpr uint8_t SET_HELO = 1;
-constexpr uint8_t SET_IHADSS = 2;
-constexpr uint8_t SET_COLOR = 3;
-constexpr uint8_t SET_MISC = 4;
-constexpr uint8_t SET_NS430 = 5;
+constexpr uint8_t SET_SIGHT = 1;
+constexpr uint8_t SET_MISC = 2;
+constexpr uint8_t SET_PHOTO = 3;
+constexpr uint8_t SET_ICON = 4;
+constexpr uint8_t SET_TECHNIQUE = 8;
+constexpr uint8_t SET_TESTVS = 9;
+constexpr uint8_t SET_DEBUG = 10;
+constexpr uint8_t SET_STOPWATCH = 5;
+//will have to be cleaned up later
+/*
 constexpr uint8_t SET_REFLECT = 6;
 constexpr uint8_t SET_NVG = 7;
-constexpr uint8_t SET_TECHNIQUE = 8;
-constexpr uint8_t SET_FPS_LIMIT = 9;
-constexpr uint8_t SET_DUMMY = 10;
-// not used, maintained for code compilation
-constexpr uint8_t SET_STOPWATCH = 11;
-// 
+*/
+// !!!
 // update mapping between technique name and feature at bottom of the file
 
 //*****************************************************************************
 // Key mapping
 //pilote note on/off: K
-/*static const uint32_t VK_PILOTE_NOTE = 0x4B; //'k'
+static const uint32_t VK_PILOTE_NOTE = 0x4B; //'k'
 static const uint32_t VK_PILOTE_NOTE_MOD = VK_SHIFT;
 static const uint32_t VK_TEST_VS = VK_DIVIDE;
 static const uint32_t VK_NIGHT_MODE = 0x55; //'u'
 static const uint32_t VK_NIGHT_MODE_MOD = VK_CONTROL;
 static const uint32_t VK_STOPWATCH = 0x4A; // 'j'
 static const uint32_t VK_STOPWATCH_MOD_START = VK_SHIFT;
-static const uint32_t VK_STOPWATCH_MOD_RESET = VK_CONTROL; */
+static const uint32_t VK_STOPWATCH_MOD_RESET = VK_CONTROL;
 
-static const uint32_t VK_TADS_VIDEO = VK_F6;
-static const uint32_t VK_TADS_VIDEO_MOD = VK_MENU;
-
-static const uint32_t VK_IHADSS_BORE = VK_F8;
-static const uint32_t VK_IHADSS_BORE_MOD = VK_MENU;
-
-static const uint32_t VK_IHADSS_NOLEFT = VK_F10;
-static const uint32_t VK_IHADSS_NOLEFT_MOD = VK_MENU;
-
-static const uint32_t VK_NS430 = VK_F5;
-static const uint32_t VK_NS430_MOD = VK_MENU;
 
 
 //*****************************************************************************
@@ -492,9 +488,10 @@ struct __declspec(uuid("6598CABA-191D-4E3C-8D3E-F61427F2BA51")) addon_shared
 	uint32_t max_photo_number = 0;
 	uint32_t target_photo_number = 0;
 	bool default_photo_number = true;
+	bool photo_copied = false;
 
 	//texture readed from file
-	bool texture_to_read = false;
+	bool texture_to_read = true;
 	//stopwatch
 	struct AddonText stopWatchText;
 
@@ -522,15 +519,11 @@ extern bool do_not_draw;
 // for logging shader_resource_view in push_descriptors() to get depthStencil 
 // extern bool track_for_texture;
 inline bool track_for_texture = false;
-
 // current depth Stencil handle
-inline uint64_t current_DepthStencil_handle = 0;
-
-// current NS430 Stencil handle
-inline uint64_t current_NS430_handle = 0;
-
-//inline uint64_t current_Photo_handle = 0;
-// not used but maintained for code compilation
+inline uint64_t current_PlaneMask_handle = 0;
+//current texture handle
+inline uint64_t current_depth_handle =0;
+inline uint64_t current_Photo_handle = 0;
 inline uint64_t current_StopWatch_handle = 0;
 
 // track render target
@@ -541,90 +534,50 @@ inline uint64_t current_RTV_handle = 0;
 
 //*****************************************************************************
 // definition of action triggered by shaders/pipeline
-
-inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
+inline std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 {
-	// ** fix for rotor **
-	{0xC0CC8D69, Shader_Definition(action_replace_bind, Feature::Rotor, L"AH64_rotorPS.cso", 0, {SET_HELO})},
-	{ 0x349A1054, Shader_Definition(action_replace_bind, Feature::Rotor, L"AH64_rotor2PS.cso", 0, {SET_HELO}) },
-	//this shader is making the game crashing on reload if action_replace_bind !!!
-	{ 0xD3E172D4, Shader_Definition(action_replace, Feature::Rotor, L"UH1_rotorPS.cso", 0, {SET_HELO}) },
-	// ** fix for IHADSS **
-	{ 0x2D713734, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_PNVS_PS.cso", 0, {SET_HELO}) },
-	{ 0xDF141A84, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_PS.cso", 0, {SET_HELO}) },
-	{ 0x45E221A9, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_VS.cso", 0, {SET_HELO}) },
 
-	// to start spying texture for depthStencil (Vs associated with global illumination PS)
-// and inject modified CB CperFrame (all MSAA supported)
-{ 0x4DDC4917, Shader_Definition(action_log | action_get_text | action_injectCB, Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
+	// ** get maks for own plane, t8 should be OK
+	//own plane texture
+	{0xf7fce9a6, Shader_Definition(action_log | action_get_text  , Feature::VS_ext_ownPlane, L"", 0, {SET_DEFAULT})},
+	//cockpit+test
+	{0x63ba565f, Shader_Definition(action_log| action_get_text| action_replace , Feature::VS_ownPlane, L"test_far_VS.cso", 0, {SET_PHOTO, SET_TESTVS })},
 
-//sky inject modified CB CperFrame
-{ 0x57D037A0, Shader_Definition(action_injectCB, Feature::Sky, L"", 0, {SET_MISC}) },
+	// external only
+	{0xd966cd46, Shader_Definition(action_log, Feature::PS_external, L"", 0, {SET_DEFAULT})},
 
-// global PS for all changes
-{ 0xBAF1E52F, Shader_Definition(action_replace | action_injectText, Feature::Global, L"global_PS_2.cso", 0, {SET_MISC}) },
+	//global PS before the one below, used to get render target
+	{0xe2d95d7a, Shader_Definition(action_track_RT, Feature::PS_preGlobal, L"", 0, {SET_TECHNIQUE})},
 
-// VS associated with global PS 2, trigger draw increase (not in PS to be more DCS settings independant) and engage render technique if 2D mode
-{ 0x8DB626CD, Shader_Definition(action_log | action_renderTechnique , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
-//
-//{ 0x8DB626CD, Shader_Definition(action_log , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
-//
-// render technique before GUI (VR only)
-{ 0x6656f8a6 , Shader_Definition(action_renderTechnique, Feature::VS_global1, L"", 0, {SET_DEFAULT}) },
-{ 0x936b2b6a , Shader_Definition(action_renderTechnique, Feature::VS_global1_MSAA, L"", 0, {SET_DEFAULT}) },
+	//last global PS, to postpone rendering of technique
+	{0xe2d95d7a, Shader_Definition(action_log, Feature::PS_preGlobal, L"", 0, {SET_TECHNIQUE})},
 
-// Label PS
-{ 0x6CEA1C47, Shader_Definition(action_replace_bind | action_injectText, Feature::Label , L"labels_PS.cso", 0, {SET_MISC}) },
-// ** NS430 **
-// to inject convergence
-{ 0x52C97365, Shader_Definition(action_replace_bind, Feature::NS430, L"VR_GUI_MFD_VS.cso", 0, {SET_NS430}) },
-// to start spying texture for screen texture (Vs associated with NS430 screen EDF9F8DD for su25T&UH1, not same res. texture !)
-{ 0x8439C716, Shader_Definition(action_get_text, Feature::NS430, L"", 0, {SET_NS430}) },
-// inject texture in global GUI and filter screen display (same shader for both)
-// 
-// could be used to track render target for alternate VR rendering, exists also in UH1 ?
-//{ 0x99D562, Shader_Definition(action_replace_bind | action_injectText, Feature::GUI_MFD, L"VR_GUI_MFD_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
-// new PS to use ?
-// { 0xDB7FE106, Shader_Definition(action_replace_bind | action_injectText, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
-// { 0xDB7FE106, Shader_Definition(action_replace_bind, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
+	//global PS for image modification (last PS), used to set eye, display mask for debug. Its render target is used for effect
+	{0x9f694be6, Shader_Definition(action_replace | action_injectText | action_log | action_renderTechnique, Feature::PS_global, L"Global.cso", 0, {SET_DEFAULT, SET_DEBUG, SET_TECHNIQUE, SET_STOPWATCH })},
 
-// these 2 shaders are making the game crashing if action_replace_bind !!!
-// disable NS430 frame, shared with some cockpit parts (can not be done by skip)
-//{ 0xEFD973A1, Shader_Definition(action_replace, Feature::NS430 , L"NS430__framePS.cso", 0, {SET_NS430}) },
-{ 0xEFD973A1, Shader_Definition(action_skip, Feature::NS430 , L"", 0, {SET_NS430}) },
-// disable NS430 screen background (done in shader because shared with other objects than NS430) => no more needed
-//{ 0x6EF95548, Shader_Definition(action_replace, Feature::NS430, L"NS430_screen_back.cso", 0, {SET_NS430}) },
-// to filter out call for GUI and MFD
-// use also to get RT in VR !
-{ 0x55288581, Shader_Definition(action_log, Feature::GUI, L"", 0, {SET_DEFAULT}) },
-//  ** identify game config **
-// to define if VR is active or not (2D mirror view of VR )
-{ 0x886E31F2, Shader_Definition(action_log, Feature::VRMode, L"", 0, {SET_DEFAULT}) },
-// VS drawing cockpit parts to define if view is in welcome screen or map
-{ 0xA337E177, Shader_Definition(action_log , Feature::mapMode, L"", 0, {SET_DEFAULT}) },
+	//VR mirror
+	{0x39aa3616, Shader_Definition(action_log, Feature::PS_VRMirror, L"", 0, {SET_DEFAULT})},
+	
+	//sight PS
+	{0x45983fba, Shader_Definition(action_replace , Feature::PS_sight, L"sight_PS.cso", 0, {SET_SIGHT})},
 
-//  ** reflection on instrument, done by GCOCKPITIBL of CperFrame **
-// A10C PS
-{ 0xECF6610, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
-// AH64 + F4 PS
-//{ 0x7BB48FB, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
-{ 0x485b58ba, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
+	// sun halo
+	{0x27fca33b, Shader_Definition(action_replace | action_injectText , Feature::PS_sun, L"mask_sun.cso", 0, {SET_MISC})},
+	
+	//VR GUI
+	{0x7379c02c, Shader_Definition(action_replace | action_injectText , Feature::PS_VR_GUI, L"VR_GUI_PS.cso", 0, {SET_PHOTO})},
+	
+	// icons
+	{0x8c76b5ee, Shader_Definition(action_replace | action_injectText , Feature::PS_icon, L"icon_PS.cso", 0, {SET_ICON})},
+	// icon text
+	{0xdcb7b073, Shader_Definition(action_replace | action_injectText , Feature::PS_icon_text, L"icon_text_PS.cso", 0, {SET_ICON})},
 
-//  ** NVG **
-{ 0xE65FAB66, Shader_Definition(action_replace_bind , Feature::NVG , L"NVG_extPS.cso", 0, {SET_NVG}) },
+	//to dump textures & CB (currenlty filled : VS for global PS)
+	//{0xdf640d43, Shader_Definition(action_dump , Feature::VS_dump, L"", 0, {SET_DEFAULT})},
 
-//  ** identify render target ** (VS associated with first global PS below GUI), VR only
-{ 0xb034e6a5, Shader_Definition(action_track_RT , Feature::GlobalVS1 , L"", 0, {SET_TECHNIQUE}) },
-
-//  ** identify render target ** (same than previous mod), VR only
-//{ 0x936B2B6A, Shader_Definition(action_track_RT , Feature::GlobalVS1b , L"", 0, {SET_TECHNIQUE}) },
-
-//  ** identify render target ** (VS associated with first global PS), VR only
-{ 0x5f6a14bd, Shader_Definition(action_track_RT , Feature::GlobalVS1b , L"", 0, {SET_TECHNIQUE}) },
-
-//to test texture dump, VS associated with welcome screen Icons PS
-//{ 0xa337e177, Shader_Definition(action_log | action_dump , Feature::Testing , L"", 0, {SET_DEFAULT}) },
-
+	// test
+	{0x3b7d44c2, Shader_Definition(action_replace , Feature::VS_test, L"test_near_VS.cso", 0, {SET_TESTVS})},
+	
 };
 
 //*****************************************************************************
@@ -633,31 +586,45 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 // settings
 inline std::unordered_map<std::string, int> settings_mapping = {
 	{"set_default", SET_DEFAULT},
-	{"set_misc", SET_MISC},
+	{"set_sight", SET_SIGHT},
+	{"set_misc", SET_MISC },
 	{"set_technique", SET_TECHNIQUE },
-	{"set_helo", SET_HELO },
-	{"set_nvg", SET_NVG },
-	{"set_ns430", SET_NS430 },
+	{"set_debug", SET_DEBUG },
+	{"set_photo", SET_PHOTO },
+	{"set_icon", SET_ICON },
+	{"set_stopwatch", SET_STOPWATCH },
+	{"set_testVS", SET_TESTVS },
+	
 };
 
 //variables 
 static const std::unordered_map<std::string, float*> var_mapping = {
 	//to read settings
-	//misc
-	{"var_label",& a_shared.cb_inject_values.maskLabels },
-	{"var_haze_factor", &a_shared.cb_inject_values.hazeReduction},
-	{"var_reflection", &a_shared.cb_inject_values.gCockpitIBL},
-	{"var_NVG_size", &a_shared.cb_inject_values.NVGSize},
-	{"var_NVG_YPOS", &a_shared.cb_inject_values.NVGYPos},
-	{"var_test_color", &a_shared.cb_inject_values.testGlobal},
-	{"var_rotor", &a_shared.cb_inject_values.rotorFlag},
-	{"var_TADSDay", &a_shared.cb_inject_values.TADSDay},
-	{"var_TADSNight", &a_shared.cb_inject_values.TADSNight},
-	{"var_IHADSSxOffset", &a_shared.cb_inject_values.IHADSSxOffset},
-	{"var_ns430scale", &a_shared.cb_inject_values.NS430Scale},
-	{"var_ns430xpos", &a_shared.cb_inject_values.NS430Xpos},
-	{"var_ns430ypos", &a_shared.cb_inject_values.NS430Ypos},
-	{"var_ns430convergence", &a_shared.cb_inject_values.NS430Convergence},
-	{"var_ns430guiyScale", &a_shared.cb_inject_values.GUIYScale},
-		
+	//mask
+	{"var_mask_sun",& a_shared.cb_inject_values.maskSun },
+	{"var_debugMask", &a_shared.cb_inject_values.testFlag},
+	//sight
+	{"var_sightFactor", &a_shared.cb_inject_values.sightFactor},
+	{"var_sightEye", &a_shared.cb_inject_values.sightEye},
+	// pilot note
+	{"var_photo_scale", &a_shared.cb_inject_values.photo_scale},
+	{"var_photo_XPOS", &a_shared.cb_inject_values.photo_XPOS},
+	{"var_photo_YPOS", &a_shared.cb_inject_values.photo_YPOS},
+	{"var_triangle", &a_shared.cb_inject_values.disable_triangle},
+	{"var_grey", &a_shared.cb_inject_values.grey_icons},
+	{"var_grey_level", &a_shared.cb_inject_values.grey_level},
+	{"var_mask_icon", &a_shared.cb_inject_values.mask_icon},
+	{"var_map_bright", &a_shared.cb_inject_values.map_bright},
+	{"var_clock_scale", &a_shared.cb_inject_values.clock_scale},
+	{"var_clock_XPOS", &a_shared.cb_inject_values.clock_XPOS},
+	{"var_clock_YPOS", &a_shared.cb_inject_values.clock_YPOS},
+	{"set_clock_hours", &a_shared.cb_inject_values.clock_hours_flag},
+	/*{"var_clock_hours", &a_shared.cb_inject_values.clock_hours},
+	{"var_clock_mins", &a_shared.cb_inject_values.clock_mins},
+	{"var_clock_secs", &a_shared.cb_inject_values.clock_secs},*/
+	
+	// to share variables from addon to technique 
+	{"unif_display", &a_shared.cb_inject_values.count_display},
+	//test
+	{"unif_test", &a_shared.cb_inject_values.sightEye},
 };

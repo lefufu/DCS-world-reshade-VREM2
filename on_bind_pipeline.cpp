@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 //
-// Reshade DCS VREM2 addon. VR Enhancer Mod for IDCS using reshade
+// Reshade IL2 VREM addon. VR Enhancer Mod for IL2 using reshade
 // "hot" reload of mod possible using a Reshade addon as launcher (loaded with the game)
 // and a dll containing the mod logic itselve. Mod settings are in uniforms of a technique
 // 
@@ -63,121 +63,77 @@ static uint32_t last_pipeline_hash_PS = 0;
 
 void process_action_log(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
-
-	// PS for GUI : set flag
-	if (it->second.feature == Feature::GUI)
+	// PS for global : set eye : 1 = left, 2 = right
+	if (it->second.feature == Feature::PS_global)
 	{
-		a_shared.cb_inject_values.GUItodraw = 1.0;
+		a_shared.count_display += 1;
+		a_shared.cb_inject_values.count_display = a_shared.count_display;
+		if (a_shared.cb_inject_values.max_display < a_shared.count_display)
+			a_shared.cb_inject_values.max_display = a_shared.count_display;
+
+#if _DEBUG_LOGS  
+		// log infos
+		log_increase_count_display();
+#endif
+	}
+
+	// PS for own plane 
+	if (it->second.feature == Feature::PS_lastGlobal)
+	{
+		// tempo to authorize fist launch of techniques
+		if (a_shared.wait_for_technique <= FRAME_BEFORE_TECHNIQUE)
+			a_shared.wait_for_technique = a_shared.wait_for_technique + 1;
+
+		// to avoid copy photo for all frames
+		a_shared.photo_copied = true;
 
 		// log infos
 #if _DEBUG_LOGS  
-		log_start_monitor("GUItodraw");
+		log_start_monitor("Last global");
 #endif
 	}
-
-	// PS for mirror view : setup VR mode
-	if (it->second.feature == Feature::VRMode)
-	{
-		a_shared.cb_inject_values.VRMode = 1.0;
-		//for technique control
-		g_shared_state->is_VR = true;
-		// identify which view was used before mirror view
-		// defaut
-		a_shared.mirror_VR = 0;
-		// secure only 1 and 2 view processed
-		if (a_shared.count_display == 1) a_shared.mirror_VR = 0;
-		if (a_shared.count_display == 2) a_shared.mirror_VR = 1;
-#if _DEBUG_LOGS  
-		log_mirror_view();
-#endif
-	}
-
-	if (it->second.feature == Feature::mapMode)
-	{
-		a_shared.cb_inject_values.mapMode = 0.0;
-	}
-
-
-	if (it->second.feature == Feature::VS_global2)
-	{
-		// handle the case where the Ps is called 2 time consecutivelly because of mirror view
-		if (a_shared.last_feature != Feature::Global && !a_shared.cb_inject_values.mapMode)
-		{
-
-			// if texure has been copied previously, increase draw count, otherwise do nothing, to avoid counting shader calls for MFD rendering
-			// if (a_shared.depthStencil_copy_started)
-			{
-
-				a_shared.count_display += 1;
-				// log max of count_display to enable or not features for VR / Quad view
-				a_shared.count_draw = max(a_shared.count_draw, a_shared.count_display);
-				// it's stupid but I'm too lazy to change code now..
-				a_shared.cb_inject_values.count_display = a_shared.count_display;
-
-			}
-			/* else
-			{
-				// log infos
-				log_not_increase_draw_count();
-			} */
-		}
-
-		// set up draw flag to avoid push_constant() doing effect before draw (it will be overwritten by the PS)
-		a_shared.draw_passed = false;
-
-	}	
-	// tempo to authorize fist launch of techniques
-	if (a_shared.wait_for_technique <= FRAME_BEFORE_TECHNIQUE)
-		a_shared.wait_for_technique = a_shared.wait_for_technique + 1;
 }
 
 //*******************************************************************************
 // inject texture 
 void process_action_injectText(command_list* commandList, std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
-	// inject texture using push_descriptor() if things has been initialized 
+	// inject texture using push_descriptor() if things has been initialized => draw index is > -1
 
-	// inject mask and depth texture
-	// check if the current depthStencil is declared
-	auto it_ds = a_shared.copied_textures.find(current_DepthStencil_handle);
-	if (it_ds != a_shared.copied_textures.end())
+	//texture read from shaders
+	//check if the current planeMask is declared
+	auto it_mask = a_shared.copied_textures.find(current_PlaneMask_handle);
+	if (it_mask != a_shared.copied_textures.end())
 	{
-		// stencil depth textures in shaders for color change and label masking 
-		if ((it->second.feature == Feature::Global || it->second.feature == Feature::Label) && a_shared.count_display >= 0 && a_shared.copied_textures[current_DepthStencil_handle].copied)
+		// stencil & depth textures in shaders 
+		if ((it->second.feature == Feature::PS_global || it->second.feature == Feature::PS_sun || it->second.feature == Feature::PS_icon || it->second.feature == Feature::PS_icon_text) && a_shared.copied_textures[current_PlaneMask_handle].copied)
 		{
-			reshade::api::descriptor_table_update update;
 
-			if (a_shared.cb_inject_values.AAMode == 1.0)
-			{
-				//inject depth texture in t3 and t4 for MSAA0X
-				inject_texture(commandList, 3, current_DepthStencil_handle, "Depth and stencil MSAA0x");
-			}
-			else if (a_shared.cb_inject_values.AAMode == 2.0)
-			{
-				//inject depth texture in t5 and t6  for MSAA2X
-				inject_texture(commandList, 5, current_DepthStencil_handle, "Depth and stencil MSAA2x");
-			}
-			else if (a_shared.cb_inject_values.AAMode == 4.0)
-			{
-				//inject depth texture in t7 and t8  for MSAA4X
-				inject_texture(commandList, 7, current_DepthStencil_handle, "Depth and stencil MSAA4x");
-			}
+			//inject mask texture in t3
+			inject_texture(commandList, 3, current_PlaneMask_handle, "PlaneMask");
+
+			//inject depth texture in t4 and t5 
+			inject_texture(commandList, 4, current_depth_handle, "Depth and stencil");
+
 		}
 
+		// photo texture in shader in t6
+		if ((it->second.feature == Feature::PS_global || it->second.feature == Feature::PS_VR_GUI) && a_shared.copied_textures[current_Photo_handle].copied)
+		{
+			//inject photo texture
+			inject_texture(commandList, 6, current_Photo_handle, "Photo");
+		}
 	}
-	// inject NS430 texture in t5
-	// check if the current depthStencil is declared
-	auto it_NS430 = a_shared.copied_textures.find(current_NS430_handle);
-	if (it_NS430 != a_shared.copied_textures.end())
-	{
-		
-		if ((it->second.feature == Feature::GUI_MFD) && a_shared.count_display >= 0 && a_shared.copied_textures[current_NS430_handle].copied)
-		{
-			//inject depth texture in t3 and t4 for MSAA0X
-			inject_texture(commandList, 5, current_NS430_handle, "NS430");
-			
-		}
 
+	//texture read from file
+	//stopwatch
+	if (a_shared.stopWatchText.resource.handle != 0 && a_shared.VREM_setting[SET_STOPWATCH])
+	{
+		if (it->second.feature == Feature::PS_global || it->second.feature == Feature::PS_VR_GUI) 
+		{
+			//inject stopwatch texture as t9
+			inject_texture(commandList, 7, current_StopWatch_handle, "StopWatch");
+		}
 	}
 
 }
@@ -204,7 +160,7 @@ void process_action_replace(command_list* commandList, pipeline_stage stages, pi
 #endif
 	}
 	// if (it->second.action & action_replace_bind || ((it->second.action & action_replace) && g_shared_state->debug))
-	if (it->second.action & action_replace_bind)
+	if (it->second.action & action_replace_bind )
 	{
 		// shader is to be replaced by the new one created in on_Init_Pipeline
 		commandList->bind_pipeline(stages, it->second.substitute_pipeline);
@@ -217,10 +173,10 @@ void process_action_replace(command_list* commandList, pipeline_stage stages, pi
 
 //*******************************************************************************
 // setup flags to get texture
-void process_action_get_text(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
+void process_action_action_get_text(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
 	// track stencil and depth
-	if (it->second.feature == Feature::GetStencil && !a_shared.not_track_mask_anymore)
+	if (it->second.feature == Feature::VS_ext_ownPlane && !a_shared.not_track_mask_anymore)
 	{
 		//set flag to get mask texture at next push_descriptors
 		track_for_texture = true;
@@ -232,15 +188,15 @@ void process_action_get_text(std::unordered_map<uint64_t, Shader_Definition>::it
 
 	}
 
-	// track NS430
-	if (it->second.feature == Feature::NS430 && !a_shared.not_track_mask_anymore)
+	// track photo texture, copty texture once per key press
+	if (it->second.feature == Feature::VS_ownPlane && a_shared.cb_inject_values.photo_on)
 	{
 		//set flag to get mask texture at next push_descriptors
 		track_for_texture = true;
 
 #if _DEBUG_LOGS  
 		// log infos
-		log_start_monitor("NS430");
+		log_start_monitor("photo");
 #endif
 
 	}
@@ -250,8 +206,9 @@ void process_action_get_text(std::unordered_map<uint64_t, Shader_Definition>::it
 
 //*******************************************************************************
 // setup flags to dump  textures
-void process_action_dump_text(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
+void process_action_action_dump_text(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
+	// if (it->second.feature == Feature::VS_ext_ownPlane && !a_shared.not_track_mask_anymore)
 	if (!a_shared.not_track_mask_anymore)
 	{
 		//set flag to get mask texture at next push_descriptors
@@ -269,8 +226,9 @@ void process_action_dump_text(std::unordered_map<uint64_t, Shader_Definition>::i
 
 //*******************************************************************************
 // setup flags to dump  CB
-void process_action_dump_CB(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
+void process_action_action_dump_CB(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
+	// if (it->second.feature == Feature::VS_ext_ownPlane && !a_shared.not_track_mask_anymore)
 	if (!a_shared.not_track_mask_anymore)
 	{
 		//set flag to get mask texture at next push_descriptors
@@ -288,12 +246,8 @@ void process_action_dump_CB(std::unordered_map<uint64_t, Shader_Definition>::ite
 
 //*******************************************************************************
 // setup flags to render technique
-void process_action_trackRT(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
+void process_action_action_trackRT(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
-	
-	//handle different config between VR and 2D
-	//if ( it->second.feature == Feature::GlobalVS1 )
-	
 	if (g_shared_state->technique_enabled)
 	{
 		a_shared.track_for_render_target = true;
@@ -305,132 +259,20 @@ void process_action_trackRT(std::unordered_map<uint64_t, Shader_Definition>::ite
 }
 
 //*******************************************************************************
-// setup flags skip draw
-void process_action_skip(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
-{
-	if (it->second.feature == Feature::NS430 && a_shared.cb_inject_values.NS430Flag)
-	{
-		//set flag to get mask texture at next push_descriptors
-		do_not_draw = true;
-
-#if _DEBUG_LOGS  
-		// log infos
-		log_start_monitor("ego plane mask");
-#endif
-
-	}
-}
-
-
-//*******************************************************************************
 // setup flags to render technique
-void process_action_renderTechnique(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
+void process_action_action_renderTechnique(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
 	if (g_shared_state->technique_enabled)
 	{
-		//handle different shader for VR and 2D
-		if ((!a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global2) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1_MSAA))
-		{
-			a_shared.track_for_render_target = false;
+		
+		a_shared.track_for_render_target = false;
 
-			a_shared.render_technique = true;
+		a_shared.render_technique = true;
 #if _DEBUG_LOGS  
-			// log infos
-			log_start_monitor("end of traking Render target, request technique rendering");
+		// log infos
+		log_start_monitor("end of traking Render target");
 #endif
-		}
 	}
-}
-
-//*******************************************************************************
-// inject modified CB (not used in IL2 yet, keep only for future DCS VREM2 mod)
-void process_action_injectCB(command_list* commandList, std::unordered_map<uint64_t, Shader_Definition>::iterator it)
-{
-	// inject constant buffer other than the one containing VREM setting
-	
-	//CPERFRAME/haze for global illumination :  need to modify value for haze but set orgi. value for reflection
-	if (it->second.feature == Feature::GetStencil && a_shared.CB_copied[CPERFRAME_CB_NB] && a_shared.VREM_setting[SET_MISC])
-	{
-
-		//modify value for Haze
-		a_shared.dest_CB_array[CPERFRAME_CB_NB][FOG_INDEX] = a_shared.orig_values[CPERFRAME_CB_NB][GATMINTENSITY_SAVE] * a_shared.cb_inject_values.hazeReduction;
-		// other value
-		a_shared.dest_CB_array[CPERFRAME_CB_NB][GCOCKPITIBL_INDEX_X] = a_shared.orig_values[CPERFRAME_CB_NB][GCOCKPITIBL_X_SAVE];
-		a_shared.dest_CB_array[CPERFRAME_CB_NB][GCOCKPITIBL_INDEX_Y] = a_shared.orig_values[CPERFRAME_CB_NB][GCOCKPITIBL_Y_SAVE];
-		// use push constant() to push CPerFrame 
-		// pipeline_layout for CB initialized in init_pipeline() once for all
-		commandList->push_constants(
-			shader_stage::all,
-			a_shared.saved_pipeline_layout_CB[CPERFRAME_CB_NB],
-			0,
-			0, // can not injecting only the haze value to be updated (so first = FOG_INDEX) because it is making the game crash...
-			CPERFRAME_SIZE,
-			&a_shared.dest_CB_array[CPERFRAME_CB_NB]
-		);
-#if _DEBUG_LOGS  
-		log_CB_injected("CPerFrame updated for fog, GCOCKPITIBL default");
-#endif
-
-		// last_replaced_shader = pipelineHandle.handle;
-		a_shared.last_feature = it->second.feature;
-	}
-
-	
-	//CPERFRAME/haze for other shaders :  need to keep orig. value
-	if (it->second.feature == Feature::Sky && a_shared.CB_copied[CPERFRAME_CB_NB] && a_shared.VREM_setting[SET_MISC])
-	{
-
-		//modify value for Haze
-		a_shared.dest_CB_array[CPERFRAME_CB_NB][FOG_INDEX] = a_shared.orig_values[CPERFRAME_CB_NB][GATMINTENSITY_SAVE];
-		//other value
-		a_shared.dest_CB_array[CPERFRAME_CB_NB][GCOCKPITIBL_INDEX_X] = a_shared.orig_values[CPERFRAME_CB_NB][GCOCKPITIBL_X_SAVE];
-		a_shared.dest_CB_array[CPERFRAME_CB_NB][GCOCKPITIBL_INDEX_Y] = a_shared.orig_values[CPERFRAME_CB_NB][GCOCKPITIBL_Y_SAVE];
-
-		// use push constant() to push CPerFrame 
-		// pipeline_layout for CB initialized in init_pipeline() once for all
-		commandList->push_constants(
-			shader_stage::all,
-			a_shared.saved_pipeline_layout_CB[CPERFRAME_CB_NB],
-			0,
-			0,
-			CPERFRAME_SIZE,
-			&a_shared.dest_CB_array[CPERFRAME_CB_NB]
-		);
-#if _DEBUG_LOGS  
-		log_CB_injected("CPerFrame original");
-#endif
-
-		// last_replaced_shader = pipelineHandle.handle;
-		a_shared.last_feature = it->second.feature;
-
-	}
-	
-	//CPERFRAME/reflect for instrument
-	if (it->second.feature == Feature::NoReflect && a_shared.CB_copied[CPERFRAME_CB_NB])
-	{
-
-		//modify value
-		a_shared.dest_CB_array[CPERFRAME_CB_NB][GCOCKPITIBL_INDEX_X] = a_shared.orig_values[CPERFRAME_CB_NB][GCOCKPITIBL_X_SAVE] * a_shared.cb_inject_values.gCockpitIBL;
-		a_shared.dest_CB_array[CPERFRAME_CB_NB][GCOCKPITIBL_INDEX_Y] = a_shared.orig_values[CPERFRAME_CB_NB][GCOCKPITIBL_Y_SAVE] * a_shared.cb_inject_values.gCockpitIBL;
-
-		// use push constant() to push CPerFrame 
-		// pipeline_layout for CB initialized in init_pipeline() once for all
-		commandList->push_constants(
-			shader_stage::all,
-			a_shared.saved_pipeline_layout_CB[CPERFRAME_CB_NB],
-			0,
-			0,
-			CPERFRAME_SIZE,
-			&a_shared.dest_CB_array[CPERFRAME_CB_NB]
-		);
-#if _DEBUG_LOGS  
-		log_CB_injected("CPerFrame for GCOCKPITIBL");
-#endif
-
-		// last_replaced_shader = pipelineHandle.handle;
-		a_shared.last_feature = it->second.feature;
-	}
-	
 }
 
 #ifdef _DEBUG
@@ -511,25 +353,19 @@ extern "C" {
 				process_action_replace(commandList, stages, pipelineHandle, it);
 
 			// get texture 
-			if (it->second.action & action_get_text) process_action_get_text(it);
+			if (it->second.action & action_get_text) process_action_action_get_text(it);
 
 			//dump texture (debug only)
 #ifdef _DEBUG
-			if ((it->second.action & action_dump) && flag_capture && g_shared_state->save_texture_flag) process_action_dump_text(it);
-			if ((it->second.action & action_dump) && flag_capture && g_shared_state->save_cb_flag) process_action_dump_CB(it);
+			if ((it->second.action & action_dump) && flag_capture && g_shared_state->save_texture_flag) process_action_action_dump_text(it);
+			if ((it->second.action & action_dump) && flag_capture && g_shared_state->save_cb_flag) process_action_action_dump_CB(it);
 
 #endif
 			// setup flag for tracking render target for technique
-			if (it->second.action & action_track_RT) process_action_trackRT(it);
+			if (it->second.action & action_track_RT) process_action_action_trackRT(it);
 
 			// setup flag for trendering technique
-			if (it->second.action & action_renderTechnique) process_action_renderTechnique(it);
-
-			// inject modified CB (modifed or restored version)
-			if (it->second.action & action_injectCB) process_action_injectCB(commandList, it);
-
-			// skp rendering by not drawing if the shader is to be skipped
-			if (it->second.action & action_skip) process_action_skip(it);
+			if (it->second.action & action_renderTechnique) process_action_action_renderTechnique(it);
 
 			// trace current feature for next call
 			a_shared.last_feature = it->second.feature;

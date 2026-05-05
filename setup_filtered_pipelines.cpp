@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 //
-// Reshade DCS VREM2 addon. VR Enhancer Mod for IDCS using reshade
+// Reshade IL2 VREM addon. VR Enhancer Mod for IL2 using reshade
 // "hot" reload of mod possible using a Reshade addon as launcher (loaded with the game)
 // and a dll containing the mod logic itselve. Mod settings are in uniforms of a technique
 // 
@@ -156,7 +156,8 @@ bool setup_filtered_pipelines(reshade::api::device* device, reshade::api::effect
 				if (active)
 				{
 					// cloned pipeline if needed
-					if ((shader_def_opt.value().action & action_replace_bind) || (shader_def_opt.value().action & action_replace))
+					// if ((shader_def_opt.value().action & action_replace_bind) || (shader_def_opt.value().action & action_replace))
+					if ((shader_def_opt.value().action & action_replace_bind) )
 					{
 
 						//clone the pipeline with the new shader code
