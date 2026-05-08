@@ -292,7 +292,12 @@ void enumerateTechniques(effect_runtime* runtime)
                     //for support of QV in other mod...
 					int QV_target = 0;
 
-                    g_shared_state->technique_vector.push_back({ technique, name, eff_name, VRtechnique_status, technique_status, tech_uniforms, QV_target });
+                    //define if technique is VR
+                    bool is_VREM = false;
+                    if (name.starts_with(TECH_PRE))
+                        is_VREM = true;
+
+                    g_shared_state->technique_vector.push_back({ technique, name, eff_name, VRtechnique_status, technique_status, tech_uniforms, QV_target, is_VREM });
                     //g_shared_state->technique_vector.push_back({ technique, name, eff_name , VRtechnique_status, technique_status, QV_target });
 #if _DEBUG_LOGS
                     //log 
@@ -380,27 +385,53 @@ void render_technique(short int display_to_use, command_list* cmd_list) {
         // if (!g_shared_state->no_double)
         {
 
+            a_shared.cb_inject_values.tech_display = 1;
+            
             // render all activated techniques if not 2D mirror or in 2D (reshade is already rendering the effect) 
             
-                for (int i = 0; i < g_shared_state->technique_vector.size(); ++i)
+            for (int i = 0; i < g_shared_state->technique_vector.size(); ++i)
+            {
+
+                bool render_tech = false;
+
+                //VREM techniques, only technique status is relevant as reshade native rendering is disabled in technique
+                if (g_shared_state->technique_vector[i].is_VREM)
                 {
-               
-					bool render_tech = false;
+                    if (g_shared_state->technique_vector[i].reshade_technique_status) render_tech = true;
+                }
+                else
+                {
+                    //need to avoid double rendering of technique
                     //2D case
                     if (!a_shared.cb_inject_values.VRMode && g_shared_state->technique_vector[i].VR_technique_status && (!g_shared_state->no_double || (g_shared_state->no_double && !g_shared_state->technique_vector[i].reshade_technique_status)))
                         render_tech = true;
                     // VR case
                     if (a_shared.cb_inject_values.VRMode && g_shared_state->technique_vector[i].reshade_technique_status)
+                        //if ( g_shared_state->technique_vector[i].VR_technique_status)
                         render_tech = true;
-					if (render_tech)
+                }
+                    if(render_tech)
+					//if (g_shared_state->technique_vector[i].reshade_technique_status)
                     {
+                        
+                        //update uniform to define VREM technique rendering
+                        effect_uniform_variable unif_tech_display = {};
+                        
                         //set uniform for technique if needed
                         if (g_shared_state->technique_vector[i].uniform.size() > 0)
                         {
-                    
                             for (const auto& u : g_shared_state->technique_vector[i].uniform)
                             {
-                                g_shared_state->runtime->set_uniform_value_float(u.unif_variable, *u.vrem_variable);
+                                
+                                if (u.name.starts_with("unif_"))
+                                {
+                                    g_shared_state->runtime->set_uniform_value_float(u.unif_variable, *u.vrem_variable);
+                                    log_set_uniform_value(u.name, *u.vrem_variable);
+									//save the uniform to reset if after rendering the technique
+                                    if (u.name == UNIF_TECH_DISPLAY)
+                                        unif_tech_display = u.unif_variable;
+
+                                }
                             }
                     
                         }
@@ -409,6 +440,10 @@ void render_technique(short int display_to_use, command_list* cmd_list) {
     #if _DEBUG_LOGS
                         log_effect(g_shared_state->technique_vector[i], cmd_list, last_RTV_saved.RV);
     #endif
+						//reset uniform UNIF_TECH_DISPLAY
+                        if (unif_tech_display.handle != 0) 
+                            g_shared_state->runtime->set_uniform_value_float(unif_tech_display, 0);
+
                     }
                 }
         }

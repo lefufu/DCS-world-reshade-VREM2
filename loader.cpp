@@ -181,6 +181,7 @@ static void draw_settings(reshade::api::effect_runtime* runtime)
  
     // to be used only if 2D, otherwise technique control is to be applied
     if (g_shared_state_l.technique_enabled && !g_shared_state_l.is_VR)
+    //if (g_shared_state_l.technique_enabled )
     {
         // display technique options
         ImGui::Separator();
@@ -208,26 +209,30 @@ static void draw_settings(reshade::api::effect_runtime* runtime)
         {
 
             // bool current_status = runtime->get_technique_state(entry.technique);
-
-            ImGui::BeginDisabled(entry.reshade_technique_status);
-
-            // Affiche "effect_name :: technique_name"
-            std::string label = entry.eff_name + " :: " + entry.name;
-
-            if (ImGui::Checkbox(label.c_str(), &entry.VR_technique_status))
+            if (!entry.is_VREM)
             {
-                // save technique status in file (in get_settings_from_uniform)
-                g_shared_state_l.request_update_file = true;
-                reshade::log::message(reshade::log::level::info, "****** loader - change status of technique => request save *******");
+                ImGui::BeginDisabled(entry.reshade_technique_status);
+
+                // Affiche "effect_name :: technique_name"
+                std::string label = entry.eff_name + " :: " + entry.name;
+
+                if (ImGui::Checkbox(label.c_str(), &entry.VR_technique_status))
+                {
+                    // save technique status in file (in get_settings_from_uniform)
+                    g_shared_state_l.request_update_file = true;
+                    reshade::log::message(reshade::log::level::info, "****** loader - change status of technique => request save *******");
+                }
+                ImGui::EndDisabled();
             }
-            ImGui::EndDisabled();
         }
     }
     else if (g_shared_state_l.technique_enabled && g_shared_state_l.is_VR)
     {
         ImGui::Separator();
         ImGui::Text("'Technique into the game's render pipeline' in VREM Mod settings activated");
-        ImGui::Text("activate the technique from 'home' menu for VR to see them in VR and in mirror window");
+        ImGui::Text("VREM technique are to be activated from 'home' menu for both VR and 2D");
+        ImGui::Text("activate the other techniques from 'home' menu for VR to see them in VR and in mirror window");
+
     }
 }
 
@@ -335,6 +340,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
         reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets);
         reshade::register_event<reshade::addon_event::reshade_overlay>(on_reshade_overlay);
         reshade::register_event<reshade::addon_event::reshade_reloaded_effects>(on_reshade_reloaded_effects);
+        //reshade::register_event<reshade::addon_event::reshade_begin_effects>(on_reshade_begin_effects);
         reshade::register_event<reshade::addon_event::init_swapchain>(on_init_swapchain);
 
 #else
@@ -359,6 +365,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
         reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(vrem_on_bind_render_targets_and_depth_stencil);
         reshade::register_event<reshade::addon_event::reshade_overlay>(vrem_on_reshade_overlay); 
         reshade::register_event<reshade::addon_event::reshade_reloaded_effects>(vrem_on_reshade_reloaded_effects); 
+        //reshade::register_event<reshade::addon_event::reshade_reloaded_effects>(vrem_on_reshade_begin_effects);
 #endif
 		reshade::register_event<reshade::addon_event::reshade_set_technique_state>(on_reshade_set_technique_state);																										   
         //reshade::register_event<reshade::addon_event::destroy_pipeline>(on_destroy_pipeline); 
@@ -390,6 +397,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
         reshade::unregister_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets);
         reshade::unregister_event<reshade::addon_event::reshade_overlay>(on_reshade_overlay);
         reshade::unregister_event<reshade::addon_event::reshade_reloaded_effects>(on_reshade_reloaded_effects);
+        //reshade::unregister_event<reshade::addon_event::reshade_begin_effects>(on_reshade_begin_effects);
         reshade::unregister_event<reshade::addon_event::init_swapchain>(on_init_swapchain);
 #else
         //cleaning of addon variables if no hot reload

@@ -565,10 +565,9 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	{ 0xBAF1E52F, Shader_Definition(action_replace_bind | action_injectText, Feature::Global, L"global_PS_2.cso", 0, {SET_MISC}) },
 
 	// VS associated with global PS 2, trigger draw increase (not in PS to be more DCS settings independant) and engage render technique if 2D mode only
-	// TODO : check if relevant !
 	{ 0x8DB626CD, Shader_Definition(action_log | action_renderTechnique , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
 	//
-	{ 0x8DB626CD, Shader_Definition(action_log , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
+	//{ 0x8DB626CD, Shader_Definition(action_log , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
 	//
 	// render technique before GUI (VR only)
 	{ 0x6656f8a6 , Shader_Definition(action_renderTechnique, Feature::VS_global1, L"", 0, {SET_DEFAULT}) },
@@ -578,19 +577,13 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	{ 0x6CEA1C47, Shader_Definition(action_replace_bind | action_injectText, Feature::Label , L"labels_PS.cso", 0, {SET_MISC}) },
 	// ** NS430 **
 	// to inject convergence
-	{ 0x52C97365, Shader_Definition(action_replace_bind, Feature::NS430, L"VR_GUI_MFD_VS.cso", 0, {SET_NS430}) },
-	// to start spying texture for screen texture (Vs associated with NS430 screen EDF9F8DD for su25T&UH1, not same res. texture !)
-	{ 0x8439C716, Shader_Definition(action_get_text, Feature::NS430, L"", 0, {SET_NS430}) },
+	{ 0x80A9194D, Shader_Definition(action_replace_bind, Feature::NS430, L"VR_GUI_VS.cso", 0, {SET_NS430}) },
 	// inject texture in global GUI and filter screen display (same shader for both)
-	// could be used to track render target for alternate VR rendering, exists also in UH1 ?
-	{ 0x99D562, Shader_Definition(action_replace_bind | action_injectText, Feature::GUI_MFD, L"VR_GUI_MFD_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
-	// { 0xDB7FE106, Shader_Definition(action_replace_bind | action_injectText, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
-	// { 0xDB7FE106, Shader_Definition(action_replace_bind, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_TECHNIQUE, SET_NS430}) },
-	// disable NS430 frame, shared with some cockpit parts (can not be done by skip)
-	//{ 0xEFD973A1, Shader_Definition(action_replace_bind, Feature::NS430 , L"NS430__framePS.cso", 0, {SET_NS430}) },
+	{ 0xDB7FE106, Shader_Definition(action_replace_bind | action_injectText, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_NS430}) },
+	// disable NS430 frame and screen, and aslo trakc screen texture
+	{ 0x8439C716, Shader_Definition(action_get_text| action_skip, Feature::NS430, L"", 0, {SET_NS430}) },
 	{ 0xEFD973A1, Shader_Definition(action_skip, Feature::NS430 , L"", 0, {SET_NS430}) },																				 
-	// disable NS430 screen background (done in shader because shared with other objects than NS430)
-	//{ 0x6EF95548, Shader_Definition(action_replace_bind, Feature::NS430, L"NS430_screen_back.cso", 0, {SET_NS430}) },
+
 	// to filter out call for GUI and MFD
 	// use also to get RT in VR !
 	{ 0x55288581, Shader_Definition(action_log, Feature::GUI, L"", 0, {SET_DEFAULT}) },
@@ -627,6 +620,11 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 //*****************************************************************************
 // mapping between variable name in technique and variable in CB to inject in shader
 
+//used to differenciate VREM technique rendering from reshade own swap chain rendering 
+#define UNIF_TECH_DISPLAY "unif_tech_display"
+// name of VREM specific techniques
+#define TECH_PRE "VREM_"
+
 // settings
 inline std::unordered_map<std::string, int> settings_mapping = {
 	{"set_default", SET_DEFAULT},
@@ -656,5 +654,8 @@ static const std::unordered_map<std::string, float*> var_mapping = {
 	{"var_ns430ypos", &a_shared.cb_inject_values.NS430Ypos},
 	{"var_ns430convergence", &a_shared.cb_inject_values.NS430Convergence},
 	{"var_ns430guiyScale", &a_shared.cb_inject_values.GUIYScale},
+
+	// to share variables from addon to technique 
+	{UNIF_TECH_DISPLAY, &a_shared.cb_inject_values.tech_display},
 	
 };

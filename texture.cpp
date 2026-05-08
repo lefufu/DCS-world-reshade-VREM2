@@ -118,7 +118,7 @@ resource_view copy_resource_view(device* dev,  resource_view src_resource_view, 
 /// <summary>
 ///  create needed resource, then copy existing resource into the new one, then create the new associated resource views
 /// </summary>
-uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pipeline_layout layout, uint32_t param_index, const descriptor_table_update& update, uint32_t dec_number, std::string textName)
+uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pipeline_layout layout, uint32_t param_index, const descriptor_table_update& update, uint32_t dec_number, std::string textName, bool setMSAA)
 {
 
 	device* dev = cmd_list->get_device();
@@ -130,22 +130,27 @@ uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pip
 	resource scr_resource = dev->get_resource_from_view(src_resource_view_texture);
 	resource_desc src_resource_desc = dev->get_resource_desc(scr_resource);
 
+	// setup MSAA value if texture is relevant for it
+	if (setMSAA)
+	{
+		// if MSAA texture, set the right values in constant buffer for shader injection
 	//share AA Mode (1 = no MSAA, 2 = MSAA2x, 4 = MSAA4x)
-	a_shared.cb_inject_values.AAMode = static_cast<float>(src_resource_desc.texture.samples);
-	if (a_shared.cb_inject_values.AAMode == 1)
-	{
-		a_shared.cb_inject_values.AAxFactor = 1.0;
-		a_shared.cb_inject_values.AAyFactor = 1.0;
-	}
-	else if (a_shared.cb_inject_values.AAMode == 2)
-	{
-		a_shared.cb_inject_values.AAxFactor = 2.0;
-		a_shared.cb_inject_values.AAyFactor = 1.0;
-	}
-	else if (a_shared.cb_inject_values.AAMode == 4)
-	{
-		a_shared.cb_inject_values.AAxFactor = 2.0;
-		a_shared.cb_inject_values.AAyFactor = 2.0;
+		a_shared.cb_inject_values.AAMode = static_cast<float>(src_resource_desc.texture.samples);
+		if (a_shared.cb_inject_values.AAMode == 1)
+		{
+			a_shared.cb_inject_values.AAxFactor = 1.0;
+			a_shared.cb_inject_values.AAyFactor = 1.0;
+		}
+		else if (a_shared.cb_inject_values.AAMode == 2)
+		{
+			a_shared.cb_inject_values.AAxFactor = 2.0;
+			a_shared.cb_inject_values.AAyFactor = 1.0;
+		}
+		else if (a_shared.cb_inject_values.AAMode == 4)
+		{
+			a_shared.cb_inject_values.AAxFactor = 2.0;
+			a_shared.cb_inject_values.AAyFactor = 2.0;
+		}
 	}
 
 	// create target resource once per game session, for each source resource 

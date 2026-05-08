@@ -173,8 +173,8 @@ void process_action_injectText(command_list* commandList, std::unordered_map<uin
 		
 		if ((it->second.feature == Feature::GUI_MFD) && a_shared.count_display >= 0 && a_shared.copied_textures[current_NS430_handle].copied)
 		{
-			//inject depth texture in t3 and t4 for MSAA0X
-			inject_texture(commandList, 5, current_NS430_handle, "NS430");
+			//inject depth texture in t3 
+			inject_texture(commandList, 3, current_NS430_handle, "NS430");
 			
 		}
 

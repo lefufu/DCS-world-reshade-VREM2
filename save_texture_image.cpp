@@ -165,6 +165,37 @@ static void unpack_bc4_value(uint8_t alpha_0, uint8_t alpha_1, uint32_t alpha_in
 		break;
 	}
 }
+
+static float unpack_f11(uint32_t bits)
+{
+	const uint32_t exponent = (bits >> 6) & 0x1F;
+	const uint32_t mantissa = bits & 0x3F;
+	if (exponent == 0x1F) // Inf ou NaN
+		return mantissa ? 0.0f : std::numeric_limits<float>::infinity();
+	if (exponent == 0)
+		return std::ldexp(static_cast<float>(mantissa), -20); // dénormalisé
+	// Convertit en float 32 bits : signe=0, exposant rebiaisé, mantisse décalée
+	const uint32_t f32 = ((exponent + (127 - 15)) << 23) | (mantissa << 17);
+	float result;
+	std::memcpy(&result, &f32, sizeof(result));
+	return result;
+}
+
+// Décode un float 10 bits (B10) : 5 bits exposant, 5 bits mantisse, sans signe
+static float unpack_f10(uint32_t bits)
+{
+	const uint32_t exponent = (bits >> 5) & 0x1F;
+	const uint32_t mantissa = bits & 0x1F;
+	if (exponent == 0x1F)
+		return mantissa ? 0.0f : std::numeric_limits<float>::infinity();
+	if (exponent == 0)
+		return std::ldexp(static_cast<float>(mantissa), -19); // dénormalisé
+	const uint32_t f32 = ((exponent + (127 - 15)) << 23) | (mantissa << 18);
+	float result;
+	std::memcpy(&result, &f32, sizeof(result));
+	return result;
+}
+
 // ************************************************************************************************************
 bool save_texture_image(const resource_desc &desc, const subresource_data &data, const std::string& filepath)
 {
@@ -658,6 +689,32 @@ bool save_texture_image(const resource_desc &desc, const subresource_data &data,
 									dst[3] = static_cast<uint8_t>((alpha_4bit * 255 + 7) / 15);
 								}
 							}
+						}
+					}
+					break;
+
+				case format::r11g11b10_float:
+					for (size_t y = 0; y < desc.texture.height; ++y, data_p += data.row_pitch)
+					{
+						for (size_t x = 0; x < desc.texture.width; ++x)
+						{
+							const uint32_t* const src = reinterpret_cast<const uint32_t*>(data_p + x * 4);
+							uint8_t* const dst = rgba_pixel_data.data() + (y * desc.texture.width + x) * 4;
+
+							// Extraction des composantes depuis le mot de 32 bits
+							const uint32_t r11 = (*src) & 0x7FF;  // bits  0-10
+							const uint32_t g11 = (*src >> 11) & 0x7FF;  // bits 11-21
+							const uint32_t b10 = (*src >> 22) & 0x3FF;  // bits 22-31
+
+							// Décodage en float puis conversion vers [0, 255]
+							const float r = unpack_f11(r11);
+							const float g = unpack_f11(g11);
+							const float b = unpack_f10(b10);
+
+							dst[0] = static_cast<uint8_t>(std::clamp(r, 0.0f, 1.0f) * 255.0f + 0.5f);
+							dst[1] = static_cast<uint8_t>(std::clamp(g, 0.0f, 1.0f) * 255.0f + 0.5f);
+							dst[2] = static_cast<uint8_t>(std::clamp(b, 0.0f, 1.0f) * 255.0f + 0.5f);
+							dst[3] = 255; // pas de canal alpha dans ce format
 						}
 					}
 					break;

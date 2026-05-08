@@ -87,6 +87,7 @@ struct AddonFunctions {
     void* on_reshade_present = nullptr;
     void* on_reshade_overlay = nullptr;
     void* on_reshade_reloaded_effects = nullptr;
+    void* on_reshade_begin_effects = nullptr;
     void* on_reshade_set_technique_state = nullptr;
     void* on_destroy_pipeline = nullptr;
     void* on_init_swapchain = nullptr;
@@ -181,6 +182,7 @@ private:
         funcs.cleanup = (CleanupFunc)GetProcAddress(addon_module, "vrem_cleanup");
         funcs.on_reshade_present = GetProcAddress(addon_module, "vrem_on_reshade_present");
         funcs.on_reshade_reloaded_effects = GetProcAddress(addon_module, "vrem_on_reshade_reloaded_effects");
+        funcs.on_reshade_begin_effects = GetProcAddress(addon_module, "vrem_on_reshade_begin_effects");
 
         funcs.on_init_pipeline = GetProcAddress(addon_module, "vrem_on_init_pipeline");
         funcs.on_bind_pipeline = GetProcAddress(addon_module, "vrem_on_bind_pipeline");
@@ -351,6 +353,14 @@ static void on_reshade_reloaded_effects(effect_runtime* runtime) {
     }
 }
 
+static void on_reshade_begin_effects(effect_runtime* runtime, command_list* cmd_list, resource_view rtv, resource_view rtv_srgb) {
+    if (g_reloader && g_reloader->get_functions().on_reshade_begin_effects) {
+        typedef void (*Func)(effect_runtime*, command_list* cmd_list, resource_view rtv, resource_view rtv_srgb);
+        ((Func)g_reloader->get_functions().on_reshade_begin_effects)(runtime, cmd_list, rtv, rtv_srgb);
+    }
+}
+
+
 static void on_reshade_overlay(effect_runtime* runtime) {
     if (g_reloader && g_reloader->get_functions().on_reshade_overlay) {
         typedef void (*Func)(effect_runtime*);
@@ -377,6 +387,7 @@ extern void vrem_on_init_pipeline(device* device, pipeline_layout layout, uint32
 extern void vrem_on_init_pipeline_layout(device* dev, uint32_t paramCount, const pipeline_layout_param* params, pipeline_layout layout);
 extern void vrem_on_push_descriptors(command_list* cmd_list, shader_stage stages, pipeline_layout layout, uint32_t param_index, const descriptor_table_update& update);
 extern void vrem_on_reshade_reloaded_effects(effect_runtime* runtime);
+extern void vrem_on_reshade_begin_effects(effect_runtime* runtime, command_list* cmd_list, resource_view rtv, resource_view rtv_srgb);
 extern void vrem_on_reshade_overlay(effect_runtime* runtime);
 extern void vrem_on_init_swapchain(swapchain* swapchain);
 #endif

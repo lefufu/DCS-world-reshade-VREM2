@@ -152,6 +152,8 @@ extern "C" {
 		
 		a_shared.cb_inject_values.max_display = 0;
 
+		a_shared.cb_inject_values.AAMode = 1.0;
+
 		a_shared.technique_status_loaded = false;
 
 		a_shared.first_PS_pipeline_handle = 0;

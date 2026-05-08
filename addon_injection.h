@@ -52,6 +52,14 @@ static const int RVINDEX = 3;
 // size of ShaderInjectData
 static const int CBSIZE = 44;
 
+// NS430 screen size
+static const int NS430_textSizeX = 240;
+static const int NS430_textSizeY = 128;
+
+// VR menu windows size 
+static const int VRGUI_sizeX = 1680;
+static const int VRGUI_sizeY = 1050;
+
 // Must be 32bit aligned
 struct ShaderInjectData {
 	float testFlag; //0.x
@@ -65,7 +73,7 @@ struct ShaderInjectData {
 	float hazeReduction; //2.x => used in asm !
 	float noReflect; //2.y
 	float AAMode; //2.z
-	float empty2; //2.w
+	float tech_display; //2.w
 	float empty3; //3.x
 	float empty4; //3.y
 	float empty5; //3.z

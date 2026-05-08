@@ -92,7 +92,7 @@ extern void on_bind_pipeline_hunting(command_list* commandList, pipeline_stage s
 extern void save_shader_code(device_api device_type, const shader_desc& desc);
 extern bool save_texture_image(const resource_desc& desc, const subresource_data& data, const std::string& filepath);
 extern bool save_render_target(command_list* cmd_list, uint32_t fisrthash);
-extern uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pipeline_layout layout, uint32_t param_index, const descriptor_table_update& update, uint32_t dec_number, std::string textName);
+extern uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pipeline_layout layout, uint32_t param_index, const descriptor_table_update& update, uint32_t dec_number, std::string textName, bool setMSAA);
 extern void inject_texture(command_list* commandList, uint32_t stot, uint64_t text_handle, std::string text_name);
 extern void intialize_counters();
 extern void save_all_technique_status();

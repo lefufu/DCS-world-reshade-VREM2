@@ -323,7 +323,7 @@ void log_create_CBlayout(std::string CBName, int CB_number)
 		std::stringstream s;
 		s << "addon - new pipeline layout created, hash =" << reinterpret_cast<void*>(&a_shared.saved_pipeline_layout_CB[CB_number].handle) << " ).  for CB " << CBName << " injection, ";
 		s << "  dx_register_index=" << CBINDEX << "; ";
-		reshade::log::message(reshade::log::level::info, s.str().c_str());
+		reshade::log::message(reshade::log::level::error, s.str().c_str());
 	}
 }
 
@@ -441,8 +441,8 @@ void log_push_descriptor(shader_stage stages, pipeline_layout layout, uint32_t p
 void log_creation_start(std::string texture_name)
 {
 
-	// if (g_shared_state->debug)
-	if (g_shared_state->debug_log && flag_capture)
+	if (g_shared_state->debug)
+	//if (g_shared_state->debug_log && flag_capture)
 	{
 		std::stringstream s;
 		s << " create resources and resource views to copy " << texture_name << ", count_display = " << a_shared.count_display << ";";
@@ -1236,6 +1236,26 @@ void log_init_swapchain(swapchain* swapchain)
 	{
 		std::stringstream s;
 		s << "addon - init_swapchain;";
+		reshade::log::message(reshade::log::level::info, s.str().c_str());
+	}
+}
+
+void log_set_uniform_value(std::string uniform_name, float value)
+{
+	if (g_shared_state->debug_log && flag_capture)
+	{
+		std::stringstream s;
+		s << "addon - set_uniform_value, uniform name = '" << uniform_name << "', value = " << value << ";";
+		reshade::log::message(reshade::log::level::info, s.str().c_str());
+	}
+}
+
+void log_begin_effects()
+{
+	if (g_shared_state->debug_log && flag_capture)
+	{
+		std::stringstream s;
+		s << "addon - reshade begin effect, set uniform values if needed;";
 		reshade::log::message(reshade::log::level::info, s.str().c_str());
 	}
 }

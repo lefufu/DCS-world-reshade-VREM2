@@ -32,6 +32,7 @@
     <ClCompile Include="save_render_target.cpp" />
     <ClCompile Include="save_shader_code.cpp" />
     <ClCompile Include="save_texture_image.cpp" />
+    <ClCompile Include="on_reshade_begin_effect.cpp" />
     <ClCompile Include="stb_image_impl.cpp" />
     <ClCompile Include="technique.cpp" />
     <ClCompile Include="texture.cpp" />

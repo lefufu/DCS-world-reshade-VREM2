@@ -141,4 +141,6 @@ extern void log_exported_CB(std::string path);
 extern void log_inject_preprocessor();
 extern void log_png_loaded(std::filesystem::path dds_path);
 extern void log_init_swapchain(swapchain* swapchain);
+extern void log_set_uniform_value(std::string uniform_name, float value);
+extern void log_begin_effects();
 #endif
