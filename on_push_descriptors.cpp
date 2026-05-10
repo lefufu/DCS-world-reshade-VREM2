@@ -138,8 +138,20 @@ void get_texture(command_list* cmd_list, shader_stage stages, pipeline_layout la
 		// as this is a depth stencil texture, 2 resource view will be created
 		if (reinterpret_cast<const reshade::api::resource_view*>(update.descriptors)[0].handle != 0)
 		{
-			// to retrieve infos for pushing texture in bind_pipeline
-			current_NS430_handle = copy_texture_from_desc(cmd_list, stages, layout, param_index, update, 0, "NS430", false);
+			// to retrieve infos for pushing texture in bind_pipeline if texture size is OK
+			reshade::api::resource_view  src_resource_view_texture = static_cast<const reshade::api::resource_view*>(update.descriptors)[0];
+			resource scr_resource = dev->get_resource_from_view(src_resource_view_texture);
+			if (scr_resource.handle != 0)
+			{
+				resource_desc src_resource_desc = dev->get_resource_desc(scr_resource);
+
+				if (src_resource_desc.texture.width == (float)NS430_textSizeX)
+				{
+					current_NS430_handle = copy_texture_from_desc(cmd_list, stages, layout, param_index, update, 0, "NS430", false);
+				}
+				else
+					current_NS430_handle = 0; 
+			}
 		}
 	}
 

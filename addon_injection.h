@@ -74,9 +74,9 @@ struct ShaderInjectData {
 	float noReflect; //2.y
 	float AAMode; //2.z
 	float tech_display; //2.w
-	float empty3; //3.x
-	float empty4; //3.y
-	float empty5; //3.z
+	float NVGColor; //3.x
+	float visor; //3.y
+	float visorFactor; //3.z
 	float empty6; //3.w
 	float empty7; //4.x
 	float empty8; //4.y

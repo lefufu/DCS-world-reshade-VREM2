@@ -160,6 +160,8 @@ extern "C" {
 
 		a_shared.wait_for_technique = 0;
 
+		current_NS430_handle = 0;
+
 		a_shared.current_photo_number = 0;
 		a_shared.max_photo_number = 0;
 		a_shared.target_photo_number = 0;

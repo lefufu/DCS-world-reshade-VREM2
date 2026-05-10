@@ -158,6 +158,15 @@ uniform float var_NVG_YPOS <
     ui_step = 0.01;
 > = 0.0;
 
+uniform int var_nvg_color <
+    ui_type = "combo";
+    ui_label = "VVG color override";
+    ui_tooltip = "None: standard color, Green = all vNG as US, white = all NVG as RU";
+    ui_category = "3. NVG";
+    ui_items = "None\0MGreen\0White\0";
+> = 0;
+
+
 //*************************
 // NS430 section
 // flag for the section
@@ -235,30 +244,43 @@ uniform bool set_technique <
 > = true;
 
 //*************************
-//Debug section
-uniform int fps_limit <
-    ui_type = "slider";
-    ui_label = "set fps";
-    ui_tooltip = "0 = no limit";
-    ui_category = "10. debug";
-    ui_min = 0;
-    ui_max = 90;
-    ui_step = 1;
-> = 0;
+// visor section
 
-uniform bool flag_fps <
-    ui_label = "for testing";
-    ui_tooltip = "boolean";
-    ui_category = "10. debug";
+// flag for the section
+uniform bool set_visor <
+    ui_label = "Enable visor effects";
+    ui_tooltip = "enable visor hole removal by scaling up)";
+    ui_category = "7. Visor";
+> = true;
+
+uniform bool var_visor <
+    ui_label = "visor hole removal";
+    ui_tooltip = "remove the noze hole in visor";
+    ui_category = "7. Visor";
 > = false;
 
+uniform float var_visorfactor <
+    ui_type = "slider";
+    ui_label = "visor horizontal scale";
+    ui_tooltip = "increase scale to shift the hole outside FoV";
+    ui_category = "7. Visor";
+    ui_min = 1.0;
+    ui_max = 2.0;
+    ui_step = 0.01;
+> = 1.3;
+
+
+
+//*************************
+//Debug section
 
 uniform int var_test_color <
     ui_type = "combo";
     ui_label = "color for fixed color";
-    ui_tooltip = "Liste déroulante d'options";
+    ui_tooltip = "display mask in PS";
     ui_category = "10. debug";
     ui_items = "value 1\0value 2\0value 3\0value 4\0";
+	//hidden = true;
 > = 0;
 
 /*uniform bool var_save_cso <
@@ -461,5 +483,5 @@ uniform float fTestB <
 
 technique VREM_settings
 {
-
+	
 }

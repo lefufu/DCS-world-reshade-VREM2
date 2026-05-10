@@ -325,7 +325,7 @@ void process_action_renderTechnique(std::unordered_map<uint64_t, Shader_Definiti
 	if (g_shared_state->technique_enabled)
 	{
 		//handle different shader for VR and 2D
-		if ((!a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global2) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1_MSAA))
+		if ((!a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global2 && a_shared.VREM_setting[SET_TECHNIQUE]) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1_MSAA))
 		{
 			a_shared.track_for_render_target = false;
 
