@@ -136,48 +136,55 @@ void process_action_log(std::unordered_map<uint64_t, Shader_Definition>::iterato
 void process_action_injectText(command_list* commandList, std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
 	// inject texture using push_descriptor() if things has been initialized 
-
-	// inject mask and depth texture
-	// check if the current depthStencil is declared
-	auto it_ds = a_shared.copied_textures.find(current_DepthStencil_handle);
-	if (it_ds != a_shared.copied_textures.end())
+	if ((it->second.feature == Feature::Global || it->second.feature == Feature::Label) && a_shared.count_display >= 0)
 	{
-		// stencil depth textures in shaders for color change and label masking 
-		if ((it->second.feature == Feature::Global || it->second.feature == Feature::Label) && a_shared.count_display >= 0 && a_shared.copied_textures[current_DepthStencil_handle].copied)
+		// inject mask and depth texture
+		// check if the current depthStencil is declared
+		auto it_ds = a_shared.copied_textures.find(current_DepthStencil_handle);
+		if (it_ds != a_shared.copied_textures.end())
 		{
-			reshade::api::descriptor_table_update update;
+			// stencil depth textures in shaders for color change and label masking 
+			// if ((it->second.feature == Feature::Global || it->second.feature == Feature::Label) && a_shared.count_display >= 0 && a_shared.copied_textures[current_DepthStencil_handle].copied)
+			if ( a_shared.copied_textures[current_DepthStencil_handle].copied)
+			{
+				reshade::api::descriptor_table_update update;
 
-			if (a_shared.cb_inject_values.AAMode == 1.0)
-			{
-				//inject depth texture in t3 and t4 for MSAA0X
-				inject_texture(commandList, 3, current_DepthStencil_handle, "Depth and stencil MSAA0x");
-			}
-			else if (a_shared.cb_inject_values.AAMode == 2.0)
-			{
-				//inject depth texture in t5 and t6  for MSAA2X
-				inject_texture(commandList, 5, current_DepthStencil_handle, "Depth and stencil MSAA2x");
-			}
-			else if (a_shared.cb_inject_values.AAMode == 4.0)
-			{
-				//inject depth texture in t7 and t8  for MSAA4X
-				inject_texture(commandList, 7, current_DepthStencil_handle, "Depth and stencil MSAA4x");
+				if (a_shared.cb_inject_values.AAMode == 1.0)
+				{
+					//inject depth texture in t3 and t4 for MSAA0X
+					inject_texture(commandList, 3, current_DepthStencil_handle, "Depth and stencil MSAA0x");
+				}
+				else if (a_shared.cb_inject_values.AAMode == 2.0)
+				{
+					//inject depth texture in t5 and t6  for MSAA2X
+					inject_texture(commandList, 5, current_DepthStencil_handle, "Depth and stencil MSAA2x");
+				}
+				else if (a_shared.cb_inject_values.AAMode == 4.0)
+				{
+					//inject depth texture in t7 and t8  for MSAA4X
+					inject_texture(commandList, 7, current_DepthStencil_handle, "Depth and stencil MSAA4x");
+				}
 			}
 		}
 
 	}
-	// inject NS430 texture in t5
-	// check if the current depthStencil is declared
-	auto it_NS430 = a_shared.copied_textures.find(current_NS430_handle);
-	if (it_NS430 != a_shared.copied_textures.end())
+	// inject NS430 texture 
+	if ((it->second.feature == Feature::GUI_MFD) && a_shared.count_display >= 0)
 	{
-		
-		if ((it->second.feature == Feature::GUI_MFD) && a_shared.count_display >= 0 && a_shared.copied_textures[current_NS430_handle].copied)
+		// check if the current depthStencil is declared
+		auto it_NS430 = a_shared.copied_textures.find(current_NS430_handle);
+		if (it_NS430 != a_shared.copied_textures.end())
 		{
-			//inject depth texture in t3 
-			inject_texture(commandList, 3, current_NS430_handle, "NS430");
-			
-		}
 
+			if (a_shared.copied_textures[current_NS430_handle].copied)
+			{
+				//inject depth texture in t3 => test in t8 to avoid flashing ?
+				//inject_texture(commandList, 3, current_NS430_handle, "NS430");
+				inject_texture(commandList, 8, current_NS430_handle, "NS430");
+
+			}
+
+		}
 	}
 
 }
@@ -232,7 +239,7 @@ void process_action_get_text(std::unordered_map<uint64_t, Shader_Definition>::it
 	}
 
 	// track NS430
-	if (it->second.feature == Feature::NS430 && !a_shared.not_track_mask_anymore)
+	if (it->second.feature == Feature::NS430 && a_shared.cb_inject_values.NS430Flag)
 	{
 		//set flag to get mask texture at next push_descriptors
 		track_for_texture = true;
@@ -292,7 +299,7 @@ void process_action_trackRT(std::unordered_map<uint64_t, Shader_Definition>::ite
 	//handle different config between VR and 2D
 	//if ( it->second.feature == Feature::GlobalVS1 )
 	
-	if (g_shared_state->technique_enabled)
+	if (g_shared_state->technique_enabled && !g_shared_state->technique_vector.empty() )
 	{
 		a_shared.track_for_render_target = true;
 #if _DEBUG_LOGS  
@@ -322,7 +329,7 @@ void process_action_skip(std::unordered_map<uint64_t, Shader_Definition>::iterat
 // setup flags to render technique
 void process_action_renderTechnique(std::unordered_map<uint64_t, Shader_Definition>::iterator it)
 {
-	if (g_shared_state->technique_enabled)
+	if (g_shared_state->technique_enabled && !g_shared_state->technique_vector.empty())
 	{
 		//handle different shader for VR and 2D
 		if ((!a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global2 && a_shared.VREM_setting[SET_TECHNIQUE]) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1_MSAA))
