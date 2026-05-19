@@ -76,7 +76,7 @@ void intialize_counters()
 
     a_shared.wait_for_technique = 0;
 
-    a_shared.current_photo_number = 0;
+    track_for_texture = false;
 
 	last_RTV_saved.copied = false;
     // initialize flags for texture copy

@@ -492,12 +492,6 @@ struct __declspec(uuid("6598CABA-191D-4E3C-8D3E-F61427F2BA51")) addon_shared
 	//flag to not engage technique too soon
 	uint32_t wait_for_technique = 0;
 
-	//to cycle photos
-	uint32_t current_photo_number = 0;
-	uint32_t max_photo_number = 0;
-	uint32_t target_photo_number = 0;
-	bool default_photo_number = true;
-
 	//texture readed from file
 	bool texture_to_read = false;
 	//stopwatch

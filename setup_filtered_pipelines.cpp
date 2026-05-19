@@ -51,6 +51,7 @@
 
 // static thread_local std::vector<std::vector<uint8_t>> shader_code;
 // extern std::unordered_map<uint32_t, std::vector<uint8_t>> shader_code_cache;
+extern std::unordered_map<uint32_t, std::vector<uint8_t>> shader_code_cache;
 
 // *******************************************************************************************************
 /// <summary>
@@ -138,6 +139,25 @@ bool setup_filtered_pipelines(reshade::api::device* device, reshade::api::effect
 			// reshade::log::message(reshade::log::level::info, "*** addon - add pipeline in the filtered list");
 
 			shader_def_opt = is_in_mod_hash(p.hash, p.subobject_count);
+
+			//handle static replacement
+			if (!shader_def_opt.has_value())
+			{
+				for (auto& [orig_hash, shader_def] : shader_by_hash)
+				{
+					if (!(shader_def.action & action_replace)) continue;
+
+					auto it_cso = shader_code_cache.find(orig_hash);
+					if (it_cso == shader_code_cache.end()) continue;
+
+					// compare le bytecode PS sauvegardé avec le .cso correspondant au hash original
+					if (p.ps_bytecode == it_cso->second || p.vs_bytecode == it_cso->second)
+					{
+						shader_def_opt = shader_def;
+						break;
+					}
+				}
+			}
 
 			i++;
 

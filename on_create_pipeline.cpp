@@ -88,14 +88,14 @@ bool load_shader_code_static(device_api device_type, shader_desc& orig_desc)
 					orig_desc.code_size = shader_code.size();
 
 					uint32_t new_shader_hash = calculateShaderHash(orig_desc);
-
+					/*
 					// add a new entry in shader_by_hash with new hash if not existing
 					auto it3 = shader_by_hash.find(new_shader_hash);
 					if (it3 == shader_by_hash.end()) {
 						Shader_Definition new_shader_def = it->second;
 						new_shader_def.hash = new_shader_hash;
 						shader_by_hash.emplace(new_shader_hash, new_shader_def);
-					}
+					} */
 #if _DEBUG_LOGS  
 					log_replaced_shader_code(shader_hash, it, new_shader_hash);
 #endif
