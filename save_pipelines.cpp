@@ -48,6 +48,103 @@
 #include "addon_logs.h"
 #include "to_string.hpp"
 
+
+void log_pipeline_info(
+    reshade::api::device* device,
+    reshade::api::pipeline_layout layout,
+    uint32_t subobject_count,
+    const reshade::api::pipeline_subobject* subobjects,
+    reshade::api::pipeline pipeline)
+{
+    std::stringstream s;
+    s << "\n=== Pipeline Info ===\n";
+    s << "  pipeline.handle : 0x" << std::hex << pipeline.handle << "\n";
+    s << "  layout.handle   : 0x" << std::hex << layout.handle << "\n";
+    s << "  subobject_count : " << std::dec << subobject_count << "\n";
+
+    for (uint32_t i = 0; i < subobject_count; i++)
+    {
+        const auto& sub = subobjects[i];
+        s << "  [" << i << "] count=" << sub.count << " type=";
+
+        switch (sub.type)
+        {
+        case reshade::api::pipeline_subobject_type::vertex_shader:
+            s << "vertex_shader";
+            break;
+        case reshade::api::pipeline_subobject_type::pixel_shader:
+            s << "pixel_shader";
+            break;
+        case reshade::api::pipeline_subobject_type::geometry_shader:
+            s << "geometry_shader";
+            break;
+        case reshade::api::pipeline_subobject_type::hull_shader:
+            s << "hull_shader";
+            break;
+        case reshade::api::pipeline_subobject_type::domain_shader:
+            s << "domain_shader";
+            break;
+        case reshade::api::pipeline_subobject_type::compute_shader:
+            s << "compute_shader";
+            break;
+        case reshade::api::pipeline_subobject_type::input_layout:
+            s << "input_layout";
+            if (sub.data && sub.count > 0) {
+                auto* elems = static_cast<const reshade::api::input_element*>(sub.data);
+                s << " (" << sub.count << " elements)";
+            }
+            break;
+        case reshade::api::pipeline_subobject_type::primitive_topology:
+            s << "primitive_topology";
+            if (sub.data) {
+                auto topo = *static_cast<const reshade::api::primitive_topology*>(sub.data);
+                s << " value=" << static_cast<int>(topo);
+            }
+            break;
+        case reshade::api::pipeline_subobject_type::rasterizer_state:
+            s << "rasterizer_state";
+            break;
+        case reshade::api::pipeline_subobject_type::blend_state:
+            s << "blend_state";
+            break;
+        case reshade::api::pipeline_subobject_type::depth_stencil_state:
+            s << "depth_stencil_state";
+            break;
+        case reshade::api::pipeline_subobject_type::render_target_formats:
+            s << "render_target_formats";
+            if (sub.data && sub.count > 0) {
+                auto* formats = static_cast<const reshade::api::format*>(sub.data);
+                s << " (";
+                for (uint32_t j = 0; j < sub.count; j++) {
+                    if (j > 0) s << ", ";
+                    s << static_cast<int>(formats[j]);
+                }
+                s << ")";
+            }
+            break;
+        case reshade::api::pipeline_subobject_type::depth_stencil_format:
+            s << "depth_stencil_format";
+            if (sub.data) {
+                auto fmt = *static_cast<const reshade::api::format*>(sub.data);
+                s << " value=" << static_cast<int>(fmt);
+            }
+            break;
+        default:
+            s << "unknown (0x" << std::hex << static_cast<int>(sub.type) << ")";
+            break;
+        }
+
+        // affiche le pointeur data (utile pour détecter les null)
+        s << " data=" << (sub.data ? "valid" : "NULL");
+        s << "\n";
+    }
+
+    s << "=====================";
+    reshade::log::message(reshade::log::level::info, s.str().c_str());
+}
+
+
+
 //----------------------------------------------------------------------------------------
 // save a pipeline info in a save_pipeline object
 void save_code_and_desc(
@@ -124,7 +221,7 @@ void save_pipeline_in_list(
         temp_pipe.hash[i] = 0;
 
         // if (std::find(ALLOWED_SHADERS.begin(), ALLOWED_SHADERS.end(), type) != ALLOWED_SHADERS.end())
-        
+
         if (ALLOWED_SHADERS.count(sub.type) > 0)
         {
 
@@ -133,7 +230,6 @@ void save_pipeline_in_list(
             switch (sub.type) {
             case reshade::api::pipeline_subobject_type::vertex_shader: {
                 save_code_and_desc(sub, temp_pipe.vs_bytecode, temp_pipe.vs_desc);
-                //temp_pipe.vs_hash = calculateShaderHash(temp_pipe.vs_desc);
                 temp_pipe.hash[i] = calculateShaderHash(temp_pipe.vs_desc);
                 //temp_pipe.vs_hash = hash;
 
@@ -142,8 +238,6 @@ void save_pipeline_in_list(
 
             case reshade::api::pipeline_subobject_type::pixel_shader: {
                 save_code_and_desc(sub, temp_pipe.ps_bytecode, temp_pipe.ps_desc);
-                //temp_pipe.ps_hash = calculateShaderHash(temp_pipe.ps_bytecode.data());
-                // temp_pipe.ps_hash = calculateShaderHash(temp_pipe.ps_desc);
                 temp_pipe.hash[i] = calculateShaderHash(temp_pipe.ps_desc);
                 break;
             }
@@ -203,13 +297,28 @@ void save_pipeline_in_list(
                 break;
             }
             }
+            temp_pipe.subobjects[i] = sub;
         }
+    }
+
+    //check if pipeline is not already saved
+    bool already_saved = std::any_of(
+        g_shared_state->VREM_pipelines.saved_pipelines.begin(),
+        g_shared_state->VREM_pipelines.saved_pipelines.end(),
+        [&](const save_pipeline& sp) {
+            return sp.pipeline.handle == temp_pipe.pipeline.handle;
+        }
+    );
+
+    if (already_saved) to_store = false;
+
 
         // rebuild subobjects array with pointers to copies
-        temp_pipe.subobjects.clear();
+        // temp_pipe.subobjects.clear();
 
         if (to_store)
         {
+            /*
             // Vertex Shader
             if (!temp_pipe.vs_bytecode.empty()) {
                 temp_pipe.subobjects.push_back({
@@ -309,21 +418,55 @@ void save_pipeline_in_list(
                     &temp_pipe.depth_stencil_format
                     });
             }
+            */
 #ifndef _DEBUG
             //filter pipeline to keep only those with shaders in mod
             auto shader_def_opt = is_in_mod_hash(temp_pipe.hash, temp_pipe.subobject_count);
             if (shader_def_opt.has_value())
 #endif
             {
+                
+                log_pipeline_info(device, layout, subobject_count, subobjects, pipeline);
+                
                 // add to global list
                 g_shared_state->VREM_pipelines.saved_pipelines.push_back(std::move(temp_pipe));
+				auto& saved = g_shared_state->VREM_pipelines.saved_pipelines.back();
 
+            // recompute adress to avoid using stack pointers
+            for (uint32_t i = 0; i < saved.subobject_count; i++) {
+                switch (saved.subobjects[i].type) {
+                case reshade::api::pipeline_subobject_type::vertex_shader:
+                    saved.subobjects[i].data = &saved.vs_desc; break;
+                case reshade::api::pipeline_subobject_type::pixel_shader:
+                    saved.subobjects[i].data = &saved.ps_desc; break;
+                case reshade::api::pipeline_subobject_type::geometry_shader:
+                    saved.subobjects[i].data = &saved.gs_desc; break;
+                case reshade::api::pipeline_subobject_type::hull_shader:
+                    saved.subobjects[i].data = &saved.hs_desc; break;
+                case reshade::api::pipeline_subobject_type::domain_shader:
+                    saved.subobjects[i].data = &saved.ds_desc; break;
+                case reshade::api::pipeline_subobject_type::input_layout:
+                    saved.subobjects[i].data = saved.input_elements.data(); break;
+                case reshade::api::pipeline_subobject_type::primitive_topology:
+                    saved.subobjects[i].data = &saved.topology; break;
+                case reshade::api::pipeline_subobject_type::rasterizer_state:
+                    saved.subobjects[i].data = &saved.rasterizer; break;
+                case reshade::api::pipeline_subobject_type::blend_state:
+                    saved.subobjects[i].data = &saved.blend; break;
+                case reshade::api::pipeline_subobject_type::depth_stencil_state:
+                    saved.subobjects[i].data = &saved.depth_stencil; break;
+                case reshade::api::pipeline_subobject_type::render_target_formats:
+                    saved.subobjects[i].data = saved.render_target_formats.data(); break;
+                case reshade::api::pipeline_subobject_type::depth_stencil_format:
+                    saved.subobjects[i].data = &saved.depth_stencil_format; break;
+                default: break;
+                }
+            }
                 const auto& last_pipe = g_shared_state->VREM_pipelines.saved_pipelines.back();
 #if _DEBUG_LOGS
                 // too verbose !
                 //log_saved_pipelines_value(last_pipe);
 #endif
-            }
 
         }
     }

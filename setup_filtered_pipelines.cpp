@@ -77,35 +77,15 @@ bool check_if_active_option(Shader_Definition shader_def)
 
 bool setup_filtered_pipelines(reshade::api::device* device, reshade::api::effect_runtime* runtime)
 {
-	/*
-	// parse the shader list to load all shader codes and store codes in shader_code_cache
-	read_all_shader_code();
-	
-	// ensure settings are updated from uniforms to be sure shader will be loaded regarding current mod settings
-	get_settings_from_uniforms(runtime);
-	*/
-
 	uint64_t last_handle;
 
-	filtered_pipeline.reserve(g_shared_state->VREM_pipelines.saved_pipelines.size());
 	std::optional<Shader_Definition> shader_def_opt;
-
-	/*
-	std::stringstream s;
-	s << "g_shared_state->VREM_pipelines.saved_pipelines.size() =" << g_shared_state->VREM_pipelines.saved_pipelines.size() << ";";
-	reshade::log::message(reshade::log::level::info, s.str().c_str());
-	*/
 
 	int i = 0;
 	// parse the list of saved pipelines to identify which one to keep regarding mod settings
 	for (auto& p : g_shared_state->VREM_pipelines.saved_pipelines)
 	{
 		
-		/* std::stringstream s;
-		s << "p.hash =" << p.hash << ";";
-		reshade::log::message(reshade::log::level::info, s.str().c_str());
-		s.clear();
-		*/
 
 		// Validate pipeline handle
 		if (p.pipeline.handle == 0) {
@@ -117,32 +97,25 @@ bool setup_filtered_pipelines(reshade::api::device* device, reshade::api::effect
 		bool to_be_filtered = false;
 		// check if the shader hash is in the mod list
 
-
-		// reshade::log::message(reshade::log::level::info, "*** addon - check if not already added");
-
 		// check if not already added
 		auto filtered_pipe = filtered_pipeline.find(p.pipeline.handle);
 
-		// reshade::log::message(reshade::log::level::info, "*** addon - after find");
 		if (filtered_pipe != filtered_pipeline.end()) {
 #if _DEBUG_LOGS
 			// pipeline is already in the list, do nothing
 			// ***************************************************************                   
 			// removed because too verbose !
-			// remove crash in release before moving shader_def_opt out of te loop....
-			// log_pipeline_filtered_skipped(p.pipeline.handle);
+			//log_pipeline_filtered_skipped(p.pipeline.handle);
 #endif
 		}
 		else {
 			// add pipeline in the filtered list
 
-			// reshade::log::message(reshade::log::level::info, "*** addon - add pipeline in the filtered list");
-
 			shader_def_opt = is_in_mod_hash(p.hash, p.subobject_count);
-
+			
 			//handle static replacement
 			if (!shader_def_opt.has_value())
-			{
+			{		
 				for (auto& [orig_hash, shader_def] : shader_by_hash)
 				{
 					if (!(shader_def.action & action_replace)) continue;
@@ -164,13 +137,11 @@ bool setup_filtered_pipelines(reshade::api::device* device, reshade::api::effect
 			if (shader_def_opt.has_value())
 			{
 
-				//reshade::log::message(reshade::log::level::info, "*** addon - process pipeline");
-
 				bool active = check_if_active_option(shader_def_opt.value());
 #if _DEBUG_LOGS
 				// ***************************************************************                   
 				// removed because too verbose !
-				// log_shader(p.pipeline, shader_def_opt.value(), active);
+				log_shader(p.pipeline, shader_def_opt.value(), active);
 #endif
 				// if the shader is active, add it to the filtered pipeline list for later processing
 				if (active)
@@ -181,7 +152,8 @@ bool setup_filtered_pipelines(reshade::api::device* device, reshade::api::effect
 					{
 
 						//clone the pipeline with the new shader code
-						pipeline cloned_pipeline = clone_pipeline(p.device, p.layout, p.subobject_count, p.subobjects.data(), p.pipeline, p.hash);
+						// pipeline cloned_pipeline = clone_pipeline(p.device, p.layout, p.subobject_count, p.subobjects.data(), p.pipeline, p.hash);
+						pipeline cloned_pipeline = clone_pipeline(p.device, p.layout, p.subobject_count, p.subobjects, p.pipeline, p.hash);
 						if (cloned_pipeline.handle == 0)
 						{
 							log_pipeline_clone_error(p.pipeline.handle);
@@ -201,7 +173,7 @@ bool setup_filtered_pipelines(reshade::api::device* device, reshade::api::effect
 #if _DEBUG_LOGS
 					// ***************************************************************                   
 					// removed because too verbose !
-					// log_filtered_added(p.pipeline.handle);
+					log_filtered_added(p.pipeline.handle);
 #endif
 				}
 			}
@@ -212,7 +184,8 @@ bool setup_filtered_pipelines(reshade::api::device* device, reshade::api::effect
 		{
 	
 			uint32_t hash_color[1] = { CONSTANT_HASH };
-			a_shared.cloned_constant_color_pipeline = clone_pipeline(p.device, p.layout, p.subobject_count, p.subobjects.data(), p.pipeline, hash_color);
+			// a_shared.cloned_constant_color_pipeline = clone_pipeline(p.device, p.layout, p.subobject_count, p.subobjects.data(), p.pipeline, hash_color);
+			a_shared.cloned_constant_color_pipeline = clone_pipeline(p.device, p.layout, p.subobject_count, p.subobjects, p.pipeline, hash_color);
 		}
 
 	}

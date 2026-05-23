@@ -323,7 +323,7 @@ void log_create_CBlayout(std::string CBName, int CB_number)
 		std::stringstream s;
 		s << "addon - new pipeline layout created, hash =" << reinterpret_cast<void*>(&a_shared.saved_pipeline_layout_CB[CB_number].handle) << " ).  for CB " << CBName << " injection, ";
 		s << "  dx_register_index=" << CBINDEX << "; ";
-		reshade::log::message(reshade::log::level::error, s.str().c_str());
+		reshade::log::message(reshade::log::level::info, s.str().c_str());
 	}
 }
 
@@ -617,7 +617,7 @@ void log_create_RVlayout()
 		std::stringstream s;
 		s << "on_init_pipeline_layout: new pipeline created, hash =" << reinterpret_cast<void*>(&a_shared.saved_pipeline_layout_RV.handle) << " ).  DX11 layout created for RV;";
 		s << "dx_register_index=" << RVINDEX << "; ";
-		reshade::log::message(reshade::log::level::warning, s.str().c_str());
+		reshade::log::message(reshade::log::level::info, s.str().c_str());
 	}
 }
 

@@ -74,6 +74,9 @@ pipeline clone_pipeline(
 {
     reshade::api::pipeline pipelineClone = {};
 
+    reshade::log::message(reshade::log::level::info, "*** addon - clone_pipeline");
+
+
     // clone subobjects
     reshade::api::pipeline_subobject* newSubobjects = new reshade::api::pipeline_subobject[subobjectCount];
     memcpy(newSubobjects, subobjects, sizeof(reshade::api::pipeline_subobject) * subobjectCount);
@@ -91,8 +94,18 @@ pipeline clone_pipeline(
 
             const std::vector<uint8_t>& shader_code = it->second;
 
+            reshade::log::message(reshade::log::level::info, "*** addon - before desc");
+
+            std::stringstream s;
+            s << "*** addon - data ptr = 0x" << std::hex << (uintptr_t)subobjects[i].data
+                << " type=" << (int)subobjects[i].type
+                << " count=" << subobjects[i].count;
+            reshade::log::message(reshade::log::level::info, s.str().c_str());
+
             //original Desc
             shader_desc desc = *static_cast<shader_desc*>(subobjects[i].data);
+
+            reshade::log::message(reshade::log::level::info, "*** addon - after desc");
 
             // Clone desc
             memcpy(&clonedDescs[i], &desc, sizeof(reshade::api::shader_desc));

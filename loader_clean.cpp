@@ -54,8 +54,8 @@ extern SharedState g_shared_state_l;
 void delete_saved_pipeline(save_pipeline& p) {
 
     //  clean vectors (free memory)
-    p.subobjects.clear();
-    p.subobjects.shrink_to_fit();
+    //p.subobjects.clear();
+    //p.subobjects.shrink_to_fit();
 
     p.vs_bytecode.clear();
     p.vs_bytecode.shrink_to_fit();

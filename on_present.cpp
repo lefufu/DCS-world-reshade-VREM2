@@ -218,7 +218,7 @@ extern "C" {
                 create_RV_pipeline_layout(device);
 
 
-                g_shared_state->filtered_pipeline_to_setup = setup_filtered_pipelines(g_shared_state->device, runtime);
+                bool dummy = setup_filtered_pipelines(g_shared_state->device, runtime);
             }
 
 			g_shared_state->filtered_pipeline_to_setup = false;													   

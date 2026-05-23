@@ -50,7 +50,8 @@
 #include <reshade.hpp>
 #include <set>
 #include <vector>
-#include <string>		 
+#include <string>	
+#include <deque>
 
 // name of addon .dll
 #define VREM_ADDON_NAME "DCS_VREM2.dll"
@@ -85,7 +86,8 @@ struct save_pipeline {
     reshade::api::pipeline pipeline;
 
     // subobjects copy
-    std::vector<reshade::api::pipeline_subobject> subobjects;
+    //std::vector<reshade::api::pipeline_subobject> subobjects;
+	reshade::api::pipeline_subobject subobjects[MAX_PIPELINE_OBJECTS] = {};																	   
     uint32_t subobject_count;
 
     // store data pointed by subobjects
@@ -126,7 +128,9 @@ struct PipeLine_Definition {
 struct PersistentPipelineData {
     //std::unordered_map<uint32_t, PipeLine_Definition> pipeline_by_hash;
     //std::unordered_map<uint64_t, PipeLine_Definition> pipeline_by_handle;
-    std::vector<save_pipeline> saved_pipelines;
+    // std::vector<save_pipeline> saved_pipelines;
+    std::deque<save_pipeline> saved_pipelines;
+
 };
 
 // for technique uniform mapping
