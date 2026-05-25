@@ -49,6 +49,7 @@
 #include "addon_logs.h"
 #include "addon_objects.h"
 #include "addon_functions.h"
+#include "to_string.hpp"
 
 //*******************************************************************************
 // variables shared 
@@ -118,10 +119,19 @@ extern "C" {
         const std::filesystem::path basePath = dllPath.parent_path();
 #if _DEBUG_LOGS      
 		g_shared_state->debug_log = 1;
+#else
+		g_shared_state->debug_log = 0;
 #endif       
         // initialize addon variables 
 
         addon_init = true;
+
+#ifdef _DEBUG
+		g_shared_state->debug = true;
+#else
+		g_shared_state->debug = false;
+#endif
+
 
 		// initialize hash in shader definition (for display purpose)
 		for (auto& [hash, shader_def] : shader_by_hash)
@@ -130,13 +140,11 @@ extern "C" {
 			shader_def.hash = hash;
 			
 			//replace action_replace by action_replace_bind for hot reload
-			/*
-			if (shader_def.action & action_replace && g_shared_state->debug_log)
+			if ((shader_def.action & action_replace) && g_shared_state->debug)
 			{
 				shader_def.action = (shader_def.action & ~action_replace) | action_replace_bind;
 
 			}
-			*/
 			
 		}
 
@@ -181,14 +189,7 @@ extern "C" {
 
 		//intialize the counters
 		intialize_counters();
-/*
-		//secure memory for saved pipeline list, to avoid invalid reference if resizing
-#if _DEBUG
-		g_shared_state->VREM_pipelines.saved_pipelines.reserve( MAX_PIPELINE);
-#else
-		g_shared_state->VREM_pipelines.saved_pipelines.reserve(shader_by_hash.size());
-#endif
-*/
+
 
 #if _DEBUG_CRASH reshade::log::message(reshade::log::level::info, "addon - vrem_init ended");
 #endif

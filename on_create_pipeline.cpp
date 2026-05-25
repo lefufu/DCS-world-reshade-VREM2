@@ -47,6 +47,7 @@
 #include "addon_functions.h"
 #include "addon_objects.h"
 #include "addon_logs.h"
+#include "to_string.hpp"
 
 extern std::unordered_map<uint32_t, std::vector<uint8_t>> shader_code_cache;
 
@@ -66,11 +67,13 @@ bool load_shader_code_static(device_api device_type, shader_desc& orig_desc)
 	}
 
 	//do static replacement of shader code only if not in debug mode, otherwise dynamic replacement is forced in on_bind_pipeline
-	//if (!g_shared_state->debug)
+	if (!g_shared_state->debug)
 	{
 		uint32_t shader_hash = calculateShaderHash(orig_desc);
 		//check if hash is in shader_by_hash
+
 		auto it = shader_by_hash.find(shader_hash);
+
 		if (it != shader_by_hash.end()) {
 
 			if (it->second.action & action_replace)
@@ -88,14 +91,14 @@ bool load_shader_code_static(device_api device_type, shader_desc& orig_desc)
 					orig_desc.code_size = shader_code.size();
 
 					uint32_t new_shader_hash = calculateShaderHash(orig_desc);
-					/*
+					
 					// add a new entry in shader_by_hash with new hash if not existing
 					auto it3 = shader_by_hash.find(new_shader_hash);
 					if (it3 == shader_by_hash.end()) {
 						Shader_Definition new_shader_def = it->second;
 						new_shader_def.hash = new_shader_hash;
 						shader_by_hash.emplace(new_shader_hash, new_shader_def);
-					} */
+					} 
 #if _DEBUG_LOGS  
 					log_replaced_shader_code(shader_hash, it, new_shader_hash);
 #endif
@@ -123,7 +126,7 @@ extern "C" {
 		bool replaced_stages = false;
 #if _DEBUG_CRASH  
 		reshade::log::message(reshade::log::level::info, "addon - vrem_on_create_pipeline starting");
-#endif
+#endif		
 		for (uint32_t i = 0; i < subobject_count; ++i)
 		{
 			
