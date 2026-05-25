@@ -52,11 +52,6 @@
 extern SharedState* g_shared_state;
 extern bool addon_init;
 
-#ifdef _DEBUG
-#define DEBUG_LOGS 1
-#else
-#define DEBUG_LOGS 0
-#endif
 
 //*****************************************************************************
 // mod parameters
@@ -215,7 +210,7 @@ enum class Feature : uint32_t
 	// VS of 2nd global color change PS
 	VS_global2 = 21,
 	// PS of sky to not modify gAtmInstensity
-	Sky = 22,
+	VS_Sky = 22,
 	// VS ofglobal illum MSAA
 	VS_light_MSAA = 23,
 	// VS visor
@@ -244,7 +239,7 @@ inline std::unordered_map<Feature, std::string> debug_feature_name = {
 	{Feature::Testing, "Testing"},
 	{Feature::VS_global2, "VS_global2"},
 	{Feature::VS_global1, "VS_global1"},
-	{Feature::Sky, "Sky"},
+	{Feature::VS_Sky, "VS_Sky"},
 	{Feature::GUI_MFD, "GUI_MFD"},
 	{Feature::VS_global1_MSAA, "VS_global1_MSAA"},
 	{Feature::VS_light_MSAA, "VS_light_MSAA"},
@@ -434,6 +429,9 @@ struct __declspec(uuid("6598CABA-191D-4E3C-8D3E-F61427F2BA51")) addon_shared
 	bool CB_copied[NUMBER_OF_MODIFIED_CB];
 	float orig_values[NUMBER_OF_MODIFIED_CB][MAX_OF_MODIFIED_VALUES];
 	bool track_for_CB[NUMBER_OF_MODIFIED_CB];
+	
+	//bool request_restore_Cperframe_haze = false;
+	//bool restore_Cperframe_haze = false;
 
 	bool track_for_NS430 = false;
 
@@ -531,8 +529,8 @@ inline uint64_t current_DepthStencil_handle = 0;
 // current NS430 Stencil handle
 inline uint64_t current_NS430_handle = 0;						 
 //inline uint64_t current_Photo_handle = 0;
-// not used but maintained for code compilation
-inline uint64_t current_StopWatch_handle = 0;
+// not used but maintained for code example
+// inline uint64_t current_StopWatch_handle = 0;
 
 // track render target
 // extern bool track_for_render_target; 
@@ -555,32 +553,32 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	{ 0x886E31F2, Shader_Definition(action_log, Feature::VRMode, L"", 0, {SET_DEFAULT}) },
 	// VS drawing cockpit parts to define if view is in welcome screen or map, used also for visor
 	// make game crash if repace_bind)
-	{ 0xA337E177, Shader_Definition(action_log | action_replace_bind, Feature::mapMode, L"visor_VS.cso", 0, {SET_DEFAULT, SET_VISOR}) },
+	{ 0xA337E177, Shader_Definition(action_log | action_replace, Feature::mapMode, L"visor_VS.cso", 0, {SET_DEFAULT, SET_VISOR}) },
 	// VS associated with global PS 2, trigger draw increase (not in PS to be more DCS settings independant) and engage render technique if 2D mode only
 	{ 0x8DB626CD, Shader_Definition(action_log | action_renderTechnique , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
 	
 	//** HELO ***
 	// fix for rotor 
-	{0xC0CC8D69, Shader_Definition(action_replace_bind, Feature::Rotor, L"AH64_rotorPS.cso", 0, {SET_HELO})},
-	{ 0x349A1054, Shader_Definition(action_replace_bind, Feature::Rotor, L"AH64_rotor2PS.cso", 0, {SET_HELO}) },
+	{0xC0CC8D69, Shader_Definition(action_replace, Feature::Rotor, L"AH64_rotorPS.cso", 0, {SET_HELO})},
+	{ 0x349A1054, Shader_Definition(action_replace, Feature::Rotor, L"AH64_rotor2PS.cso", 0, {SET_HELO}) },
 	//make game crash if replace_bind
 	{ 0xD3E172D4, Shader_Definition(action_replace, Feature::Rotor, L"UH1_rotorPS.cso", 0, {SET_HELO}) },
 	// fix for IHADSS 
-	{ 0x2D713734, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_PNVS_PS.cso", 0, {SET_HELO}) },
-	{ 0xDF141A84, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_PS.cso", 0, {SET_HELO}) },
-	{ 0x45E221A9, Shader_Definition(action_replace_bind, Feature::IHADSS, L"IHADSS_VS.cso", 0, {SET_HELO}) },
+	{ 0x2D713734, Shader_Definition(action_replace, Feature::IHADSS, L"IHADSS_PNVS_PS.cso", 0, {SET_HELO}) },
+	{ 0xDF141A84, Shader_Definition(action_replace, Feature::IHADSS, L"IHADSS_PS.cso", 0, {SET_HELO}) },
+	{ 0x45E221A9, Shader_Definition(action_replace, Feature::IHADSS, L"IHADSS_VS.cso", 0, {SET_HELO}) },
 
 	//*** MISC ***
 	// to start spying texture for depthStencil (Vs associated with global illumination PS)
 	// and inject modified CB CperFrame (all MSAA supported)
 	{ 0x4DDC4917, Shader_Definition(action_log |action_get_text| action_injectCB | action_track_RT , Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
-	//sky inject modified CB CperFrame
-	// { 0x57D037A0, Shader_Definition(action_injectCB | action_track_RT, Feature::Sky, L"", 0, {SET_MISC,SET_TECHNIQUE }) },
-	{ 0x1be5f18e, Shader_Definition(action_injectCB , Feature::Sky, L"", 0, {SET_MISC }) },
+	//VS of sky to inject restored CB CperFrame
+	{ 0x67b1ad91, Shader_Definition(action_injectCB | action_track_RT, Feature::VS_Sky, L"", 0, {SET_MISC,SET_TECHNIQUE }) },
+
 	// global PS for all changes
-	{ 0xBAF1E52F, Shader_Definition(action_replace_bind | action_injectText, Feature::Global, L"global_PS_2.cso", 0, {SET_MISC}) },
+	{ 0xBAF1E52F, Shader_Definition(action_replace | action_injectText, Feature::Global, L"global_PS_2.cso", 0, {SET_MISC}) },
 	// Label PS 
-	{ 0x6CEA1C47, Shader_Definition(action_replace_bind | action_injectText, Feature::Label , L"labels_PS.cso", 0, {SET_MISC}) },
+	{ 0x6CEA1C47, Shader_Definition(action_replace | action_injectText, Feature::Label , L"labels_PS.cso", 0, {SET_MISC}) },
 	//  reflection on instrument, done by GCOCKPITIBL of CperFrame 
 	// A10C PS 
 	{ 0xECF6610, Shader_Definition(action_injectCB , Feature::NoReflect , L"", 0, {SET_MISC}) },
@@ -591,18 +589,18 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 
 	// ** NS430 **
 	// to inject convergence
-	{ 0x80A9194D, Shader_Definition(action_replace_bind, Feature::NS430, L"VR_GUI_VS.cso", 0, {SET_NS430}) },
+	{ 0x80A9194D, Shader_Definition(action_replace, Feature::NS430, L"VR_GUI_VS.cso", 0, {SET_NS430}) },
 	// inject texture in global GUI and filter screen display (same shader for both)
-	{ 0xDB7FE106, Shader_Definition(action_replace_bind | action_injectText, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_NS430}) },
+	{ 0xDB7FE106, Shader_Definition(action_replace | action_injectText, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_NS430}) },
 	// disable NS430 frame and screen, and aslo trakc screen texture
 	{ 0x8439C716, Shader_Definition(action_get_text| action_skip, Feature::NS430, L"", 0, {SET_NS430}) },
 	{ 0xEFD973A1, Shader_Definition(action_skip, Feature::NS430 , L"", 0, {SET_NS430}) },																				 
 
 	//  ** NVG **
 	//externel PS
-	{ 0xE65FAB66, Shader_Definition(action_replace_bind , Feature::NVG , L"NVG_extPS.cso", 0, {SET_NVG}) },
+	{ 0xE65FAB66, Shader_Definition(action_replace , Feature::NVG , L"NVG_extPS.cso", 0, {SET_NVG}) },
 	//internal PS (one of the 3...)
-	{ 0xbe2aeba8, Shader_Definition(action_replace_bind , Feature::NVG , L"NVG_intPS.cso", 0, {SET_NVG}) },
+	{ 0xbe2aeba8, Shader_Definition(action_replace , Feature::NVG , L"NVG_intPS.cso", 0, {SET_NVG}) },
 
 	//** TECHNIQUES **
 	// identify render target  (VS associated with first global PS below GUI), VR only

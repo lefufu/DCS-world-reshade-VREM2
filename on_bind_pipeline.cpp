@@ -126,6 +126,7 @@ void process_action_log(std::unordered_map<uint64_t, Shader_Definition>::iterato
 		a_shared.draw_passed = false;
 
 	}	
+
 	// tempo to authorize fist launch of techniques
 	if (a_shared.wait_for_technique <= FRAME_BEFORE_TECHNIQUE)
 		a_shared.wait_for_technique = a_shared.wait_for_technique + 1;
@@ -379,9 +380,8 @@ void process_action_injectCB(command_list* commandList, std::unordered_map<uint6
 		a_shared.last_feature = it->second.feature;
 	}
 
-	
 	//CPERFRAME/haze for other shaders :  need to keep orig. value
-	if (it->second.feature == Feature::Sky && a_shared.CB_copied[CPERFRAME_CB_NB] && a_shared.VREM_setting[SET_MISC])
+	if (it->second.feature == Feature::VS_Sky && a_shared.CB_copied[CPERFRAME_CB_NB] && a_shared.VREM_setting[SET_MISC])
 	{
 
 		//modify value for Haze
