@@ -65,9 +65,9 @@ struct addon_shared a_shared;
 extern "C" __declspec(dllexport) const char* NAME = "DCS VREM2";
 extern "C" __declspec(dllexport) const char* DESCRIPTION = 
 #if _DEBUG
-"VR Enhancer Mod 2 for DCS 1.2 (DEBUG - Hot Reload Enabled).";
+"VR Enhancer Mod 2 for DCS 1.3 (DEBUG - Hot Reload Enabled).";
 #else
-"VR Enhancer Mod 2 for DCS v 1.2 (RELEASE).";
+"VR Enhancer Mod 2 for DCS v 1.3 (RELEASE).";
 #endif
 
 #ifndef _DEBUG

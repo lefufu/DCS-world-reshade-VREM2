@@ -74,7 +74,7 @@ void read_textures(reshade::api::device* device)
 		replace_path /= RESHADE_ADDON_SHADER_LOAD_DIR;
 		replace_path /= STOPWATCH_TEXT_NAME;
 
-		bool status = LoadPNG::LoadPNGTexture(device, replace_path, a_shared.stopWatchText.resource, a_shared.stopWatchText.rView);
+		//bool status = LoadPNG::LoadPNGTexture(device, replace_path, a_shared.stopWatchText.resource, a_shared.stopWatchText.rView, current_StopWatch_handle);
    }
 
 
@@ -152,6 +152,8 @@ uint64_t copy_texture_from_desc(command_list* cmd_list, shader_stage stages, pip
 			a_shared.cb_inject_values.AAyFactor = 2.0;
 		}
 	}
+	a_shared.cb_inject_values.depthX = src_resource_desc.texture.width;
+	a_shared.cb_inject_values.depthY = src_resource_desc.texture.height;
 
 	// create target resource once per game session, for each source resource 
 	bool resource_found = false;

@@ -300,7 +300,7 @@ void process_action_trackRT(std::unordered_map<uint64_t, Shader_Definition>::ite
 	//handle different config between VR and 2D
 	//if ( it->second.feature == Feature::GlobalVS1 )
 	
-	if (g_shared_state->technique_enabled && !g_shared_state->technique_vector.empty() )
+	if ((a_shared.VREM_setting[SET_TECHNIQUE] && g_shared_state->technique_enabled && !g_shared_state->technique_vector.empty()) || (a_shared.VREM_setting[SET_MISC] && a_shared.cb_inject_values.maskLabels)  )
 	{
 		a_shared.track_for_render_target = true;
 #if _DEBUG_LOGS  
@@ -336,6 +336,12 @@ void process_action_renderTechnique(std::unordered_map<uint64_t, Shader_Definiti
 		if ((!a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global2 && a_shared.VREM_setting[SET_TECHNIQUE]) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1) || (a_shared.cb_inject_values.VRMode && it->second.feature == Feature::VS_global1_MSAA))
 		{
 			a_shared.track_for_render_target = false;
+			if (g_shared_state->debug_log && flag_capture)
+			{
+				std::stringstream s;
+				s << "**** a_shared.track_for_render_target =  false !!! ***";
+				reshade::log::message(reshade::log::level::error, s.str().c_str());
+			}
 
 			a_shared.render_technique = true;
 #if _DEBUG_LOGS  

@@ -77,10 +77,10 @@ struct ShaderInjectData {
 	float NVGColor; //3.x
 	float visor; //3.y
 	float visorFactor; //3.z
-	float empty6; //3.w
-	float empty7; //4.x
-	float empty8; //4.y
-	float empty9; //4.z
+	float renderTX; //3.w
+	float renderTY; //4.x
+	float depthX; //4.y
+	float depthY; //4.z
 	float empty10; //4.w
 	float empty11; //5.x
 	float empty12; //5.y

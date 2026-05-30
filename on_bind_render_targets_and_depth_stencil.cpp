@@ -73,9 +73,12 @@ extern "C" {
 
 #endif
 		// copy render target if tracking	
+		// 
+		// 
 		// if (a_shared.track_for_render_target && a_shared.count_display > -1 && !a_shared.cb_inject_values.mapMode && count > 0 && (a_shared.VREM_setting[SET_TECHNIQUE]))
-		if (a_shared.track_for_render_target && a_shared.count_display > -1 &&  count > 0 && a_shared.VREM_setting[SET_TECHNIQUE])
+		if (a_shared.track_for_render_target && a_shared.count_display > -1 && count > 0 && ( (a_shared.VREM_setting[SET_TECHNIQUE] && g_shared_state->technique_enabled) || (a_shared.VREM_setting[SET_MISC] && a_shared.cb_inject_values.maskLabels)))
 		{
+					
 			//hanlde cases with rendere target null
 			if (rtvs[0].handle != 0)
 			//if (rtvs[0].handle != 0 && dsv != 0)
@@ -92,6 +95,9 @@ extern "C" {
 				last_RTV_saved.RV = rtvs[0];
 				last_RTV_saved.width = src_resource_desc.texture.width;
 				last_RTV_saved.height = src_resource_desc.texture.height;
+				a_shared.cb_inject_values.renderTX = src_resource_desc.texture.width;
+				a_shared.cb_inject_values.renderTY = src_resource_desc.texture.height;
+
 #if _DEBUG_LOGS  			
 				log_renderTarget_depth(count, rtvs, dsv, cmd_list, current_RTV_handle);
 #endif			

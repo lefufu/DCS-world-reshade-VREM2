@@ -553,7 +553,11 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	{ 0x886E31F2, Shader_Definition(action_log, Feature::VRMode, L"", 0, {SET_DEFAULT}) },
 	// VS drawing cockpit parts to define if view is in welcome screen or map, used also for visor
 	// make game crash if repace_bind)
+	// create issue with TAA if VS is replaced
 	{ 0xA337E177, Shader_Definition(action_log | action_replace, Feature::mapMode, L"visor_VS.cso", 0, {SET_DEFAULT, SET_VISOR}) },
+	//{ 0xA337E177, Shader_Definition(action_log | action_replace, Feature::mapMode, L"0xA337E177.cso", 0, {SET_DEFAULT, SET_VISOR}) },
+	
+	//{ 0xA337E177, Shader_Definition(action_log , Feature::mapMode, L"", 0, {SET_DEFAULT}) },
 	// VS associated with global PS 2, trigger draw increase (not in PS to be more DCS settings independant) and engage render technique if 2D mode only
 	{ 0x8DB626CD, Shader_Definition(action_log | action_renderTechnique , Feature::VS_global2, L"", 0, {SET_DEFAULT}) },
 	
@@ -571,9 +575,11 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	//*** MISC ***
 	// to start spying texture for depthStencil (Vs associated with global illumination PS)
 	// and inject modified CB CperFrame (all MSAA supported)
-	{ 0x4DDC4917, Shader_Definition(action_log |action_get_text| action_injectCB | action_track_RT , Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
+	{ 0x4DDC4917, Shader_Definition(action_log |action_get_text| action_injectCB | action_track_RT | action_dump , Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
 	//VS of sky to inject restored CB CperFrame
 	{ 0x67b1ad91, Shader_Definition(action_injectCB | action_track_RT, Feature::VS_Sky, L"", 0, {SET_MISC,SET_TECHNIQUE }) },
+	//old hash of sky (not VS..) as it seems the previous one is not always working
+	{ 0x57D037A0, Shader_Definition(action_injectCB | action_track_RT, Feature::VS_Sky, L"", 0, {SET_MISC,SET_TECHNIQUE }) },
 
 	// global PS for all changes
 	{ 0xBAF1E52F, Shader_Definition(action_replace | action_injectText, Feature::Global, L"global_PS_2.cso", 0, {SET_MISC}) },
@@ -648,23 +654,26 @@ static const std::unordered_map<std::string, float*> var_mapping = {
 	{"var_label",& a_shared.cb_inject_values.maskLabels },
 	{"var_haze_factor", &a_shared.cb_inject_values.hazeReduction},
 	{"var_reflection", &a_shared.cb_inject_values.gCockpitIBL},
+	//NVG
 	{"var_NVG_size", &a_shared.cb_inject_values.NVGSize},
 	{"var_NVG_YPOS", &a_shared.cb_inject_values.NVGYPos},
-	{"var_test_color", &a_shared.cb_inject_values.testGlobal},
+	{"var_nvg_color", &a_shared.cb_inject_values.NVGColor},
+	//Helo
 	{"var_rotor", &a_shared.cb_inject_values.rotorFlag},
 	{"var_TADSDay", &a_shared.cb_inject_values.TADSDay},
 	{"var_TADSNight", &a_shared.cb_inject_values.TADSNight},
 	{"var_IHADSSxOffset", &a_shared.cb_inject_values.IHADSSxOffset},
+	//NS430
 	{"var_ns430scale", &a_shared.cb_inject_values.NS430Scale},
 	{"var_ns430xpos", &a_shared.cb_inject_values.NS430Xpos},
 	{"var_ns430ypos", &a_shared.cb_inject_values.NS430Ypos},
 	{"var_ns430convergence", &a_shared.cb_inject_values.NS430Convergence},
 	{"var_ns430guiyScale", &a_shared.cb_inject_values.GUIYScale},
-	{"var_nvg_color", &a_shared.cb_inject_values.NVGColor},
+	//visor
 	{"var_visor", &a_shared.cb_inject_values.visor},
 	{"var_visorfactor", &a_shared.cb_inject_values.visorFactor},
 	
-
+	{"var_test_color", &a_shared.cb_inject_values.testGlobal},
 	// to share variables from addon to technique 
 	{UNIF_TECH_DISPLAY, &a_shared.cb_inject_values.tech_display},
 	
