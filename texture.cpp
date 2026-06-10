@@ -63,7 +63,7 @@ using namespace reshade::api;
 void read_textures(reshade::api::device* device)
 {
 	
-	// load stopwatch texture
+	// load stopwatch texture (kept as example of how to load texture, not used in current version of mod, but can be used for future features)
 	if (a_shared.VREM_setting[SET_STOPWATCH])
 	{
 		//file name
@@ -74,7 +74,7 @@ void read_textures(reshade::api::device* device)
 		replace_path /= RESHADE_ADDON_SHADER_LOAD_DIR;
 		replace_path /= STOPWATCH_TEXT_NAME;
 
-		//bool status = LoadPNG::LoadPNGTexture(device, replace_path, a_shared.stopWatchText.resource, a_shared.stopWatchText.rView, current_StopWatch_handle);
+		// bool status = LoadPNG::LoadPNGTexture(device, replace_path, current_StopWatch_handle);																				
    }
 
 
@@ -88,9 +88,11 @@ void read_textures(reshade::api::device* device)
 void delete_loaded_textures(reshade::api::device* device)
 {
 
-	// delete stopwatch texture
-	LoadPNG::DestroyPNGTexture(device,  a_shared.stopWatchText.resource, a_shared.stopWatchText.rView);
-
+	// delete stopwatch texture  (kept as example of how to load texture, not used in current version of mod, but can be used for future features)
+	/*
+	if (current_StopWatch_handle != 0)
+		LoadPNG::DestroyPNGTexture(device, a_shared.copied_textures[current_StopWatch_handle].texresource, a_shared.copied_textures[current_StopWatch_handle].texresource_view);
+	*/
 
 }
 

@@ -76,7 +76,7 @@ static const int SETTINGS_CB_NB = 0;
 static const int MAX_CBSIZE = 152;
 
 // maximum number of pipeline to save in debug mode
-static const int MAX_PIPELINE = 500;
+// static const int MAX_PIPELINE = 500;
 
 // index of values to change in CB
 // index of gAtmIntensity in the float array mapped for cPerFrame (cb6) 
@@ -355,7 +355,7 @@ struct resourceview_trace {
 	// bool depth_exported_for_technique;
 };
 
-//test resource for depthStencil copy
+//to handle created resources, for texture copy or texture read from file
 struct resource_DS_copy {
 	bool copied = false;
 	reshade::api::resource texresource = {};
@@ -369,12 +369,6 @@ struct saved_RenderTargetView {
 	uint32_t width = 0;
 	uint32_t height = 0;
 };
-
-// to read texture from file
-struct AddonText {
-      reshade::api::resource      resource = {  };
-      reshade::api::resource_view rView     = {  };
- };
 
 struct __declspec(uuid("6598CABA-191D-4E3C-8D3E-F61427F2BA51")) addon_shared
 {
@@ -495,8 +489,7 @@ struct __declspec(uuid("6598CABA-191D-4E3C-8D3E-F61427F2BA51")) addon_shared
 
 	//texture readed from file
 	bool texture_to_read = false;
-	//stopwatch
-	struct AddonText stopWatchText;
+
 
 
 };
@@ -554,7 +547,7 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	// VS drawing cockpit parts to define if view is in welcome screen or map, used also for visor
 	// make game crash if repace_bind)
 	// create issue with TAA if VS is replaced
-	{ 0xA337E177, Shader_Definition(action_log | action_replace, Feature::mapMode, L"visor_VS.cso", 0, {SET_DEFAULT, SET_VISOR}) },
+	{ 0xA337E177, Shader_Definition(action_injectCB | action_log | action_replace, Feature::mapMode, L"visor_VS.cso", 0, {SET_DEFAULT, SET_VISOR}) },
 	//{ 0xA337E177, Shader_Definition(action_log | action_replace, Feature::mapMode, L"0xA337E177.cso", 0, {SET_DEFAULT, SET_VISOR}) },
 	
 	//{ 0xA337E177, Shader_Definition(action_log , Feature::mapMode, L"", 0, {SET_DEFAULT}) },
@@ -578,8 +571,9 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	{ 0x4DDC4917, Shader_Definition(action_log |action_get_text| action_injectCB | action_track_RT | action_dump , Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
 	//VS of sky to inject restored CB CperFrame
 	{ 0x67b1ad91, Shader_Definition(action_injectCB | action_track_RT, Feature::VS_Sky, L"", 0, {SET_MISC,SET_TECHNIQUE }) },
+	//{ 0x67b1ad91, Shader_Definition(action_track_RT, Feature::VS_Sky, L"", 0, {SET_MISC,SET_TECHNIQUE }) },
 	//old hash of sky (not VS..) as it seems the previous one is not always working
-	{ 0x57D037A0, Shader_Definition(action_injectCB | action_track_RT, Feature::VS_Sky, L"", 0, {SET_MISC,SET_TECHNIQUE }) },
+	//{ 0x57D037A0, Shader_Definition(action_injectCB | action_track_RT, Feature::VS_Sky, L"", 0, {SET_MISC,SET_TECHNIQUE }) },
 
 	// global PS for all changes
 	{ 0xBAF1E52F, Shader_Definition(action_replace | action_injectText, Feature::Global, L"global_PS_2.cso", 0, {SET_MISC}) },
@@ -600,7 +594,9 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	{ 0xDB7FE106, Shader_Definition(action_replace | action_injectText, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_NS430}) },
 	// disable NS430 frame and screen, and aslo trakc screen texture
 	{ 0x8439C716, Shader_Definition(action_get_text| action_skip, Feature::NS430, L"", 0, {SET_NS430}) },
-	{ 0xEFD973A1, Shader_Definition(action_skip, Feature::NS430 , L"", 0, {SET_NS430}) },																				 
+	{ 0xEFD973A1, Shader_Definition(action_skip, Feature::NS430 , L"", 0, {SET_NS430}) },		
+	// { 0xEFD973A1, Shader_Definition(action_injectCB | action_skip, Feature::NS430 , L"", 0, {SET_MISC, SET_NS430}) },
+	
 
 	//  ** NVG **
 	//externel PS
@@ -678,3 +674,12 @@ static const std::unordered_map<std::string, float*> var_mapping = {
 	{UNIF_TECH_DISPLAY, &a_shared.cb_inject_values.tech_display},
 	
 };
+
+
+// to trigger render targfet tracking depending on settings (no single options)
+inline bool settings_for_render_target()
+{
+	return (	
+		(a_shared.VREM_setting[SET_TECHNIQUE] && g_shared_state->technique_enabled) || (a_shared.VREM_setting[SET_MISC] && a_shared.cb_inject_values.maskLabels)
+		);
+}

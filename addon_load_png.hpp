@@ -59,11 +59,14 @@ namespace LoadPNG
     inline bool LoadPNGTexture(
         reshade::api::device* device,
         const std::filesystem::path& path,
-        reshade::api::resource& outResource,
-        reshade::api::resource_view& outView)
+        //reshade::api::resource& outResource,
+		uint64_t& texture_handle						
+        //reshade::api::resource_view& outView,
+        //uint64_t& outHandle)
+		)
     {
-        outResource = { 0 };
-        outView = { 0 };
+        reshade::api::resource outResource = { 0 };
+        reshade::api::resource_view outView = { 0 };
 
         // ---- 1. Charger le PNG via stbi_load ----
         // Exactement comme crosire : u8string().c_str()
@@ -145,12 +148,14 @@ namespace LoadPNG
         }
 
         //add the resource and resource view in a_shared.copied_textures for usage in inject_texture
-        current_StopWatch_handle = outResource.handle;
+        //outHandle = outResource.handle;
+		texture_handle = outResource.handle;
         resource_DS_copy text_copy = {};
         text_copy.texresource_view = outView;
         text_copy.texresource = outResource;
         text_copy.texresource_view_stencil = { };
-        a_shared.copied_textures.emplace(current_StopWatch_handle, text_copy);
+        //a_shared.copied_textures.emplace(outHandle, text_copy);
+		a_shared.copied_textures.emplace(texture_handle, text_copy);
         
 
 #if _DEBUG_LOGS
