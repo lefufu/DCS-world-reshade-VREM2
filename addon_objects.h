@@ -424,8 +424,8 @@ struct __declspec(uuid("6598CABA-191D-4E3C-8D3E-F61427F2BA51")) addon_shared
 	float orig_values[NUMBER_OF_MODIFIED_CB][MAX_OF_MODIFIED_VALUES];
 	bool track_for_CB[NUMBER_OF_MODIFIED_CB];
 	
-	//bool request_restore_Cperframe_haze = false;
-	//bool restore_Cperframe_haze = false;
+	bool request_restore_Cperframe_haze = false;
+	bool restore_Cperframe_haze = false;
 
 	bool track_for_NS430 = false;
 
@@ -545,10 +545,7 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	// to define if VR is active or not (2D mirror view of VR )
 	{ 0x886E31F2, Shader_Definition(action_log, Feature::VRMode, L"", 0, {SET_DEFAULT}) },
 	// VS drawing cockpit parts to define if view is in welcome screen or map, used also for visor
-	// make game crash if repace_bind)
-	// create issue with TAA if VS is replaced
-	{ 0xA337E177, Shader_Definition(action_injectCB | action_log | action_replace, Feature::mapMode, L"visor_VS.cso", 0, {SET_DEFAULT, SET_VISOR}) },
-	//{ 0xA337E177, Shader_Definition(action_log | action_replace, Feature::mapMode, L"0xA337E177.cso", 0, {SET_DEFAULT, SET_VISOR}) },
+	{ 0xA337E177, Shader_Definition(action_log | action_replace, Feature::mapMode, L"0xA337E177.cso", 0, {SET_DEFAULT, SET_VISOR}) },
 	
 	//{ 0xA337E177, Shader_Definition(action_log , Feature::mapMode, L"", 0, {SET_DEFAULT}) },
 	// VS associated with global PS 2, trigger draw increase (not in PS to be more DCS settings independant) and engage render technique if 2D mode only

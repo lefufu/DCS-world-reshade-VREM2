@@ -177,7 +177,7 @@ extern "C" {
 		dump_text_cb(cmd_list, stages, layout, param_index, update);
 #endif
 		// to limit processing only when a tracking is setup n;
-		if (!track_for_texture && !a_shared.render_technique && (((a_shared.cb_inject_values.hazeReduction == 1.0 && a_shared.cb_inject_values.gCockpitIBL == 1.0) && a_shared.VREM_setting[SET_MISC]) || !a_shared.VREM_setting[SET_MISC]) )
+		if (!a_shared.restore_Cperframe_haze && !track_for_texture && !a_shared.render_technique && (((a_shared.cb_inject_values.hazeReduction == 1.0 && a_shared.cb_inject_values.gCockpitIBL == 1.0) && a_shared.VREM_setting[SET_MISC]) || !a_shared.VREM_setting[SET_MISC]) )
 		{
 #if _DEBUG_CRASH 
 			reshade::log::message(reshade::log::level::info, "***** addon - vrem_on_push_descriptors ended (no track)");
@@ -225,6 +225,27 @@ extern "C" {
 		if (track_for_texture && update.type == descriptor_type::shader_resource_view && stages == shader_stage::pixel)
 		{
 			get_texture(cmd_list, stages, layout, param_index, update);
+		}
+
+		// restore CPERFRAME
+		if (a_shared.restore_Cperframe_haze)
+		{
+			a_shared.dest_CB_array[CPERFRAME_CB_NB][FOG_INDEX] = a_shared.orig_values[CPERFRAME_CB_NB][GATMINTENSITY_SAVE];
+			a_shared.restore_Cperframe_haze = false;
+
+			// use push constant() to push CPerFrame 
+// pipeline_layout for CB initialized in init_pipeline() once for all
+			cmd_list->push_constants(
+				shader_stage::all,
+				a_shared.saved_pipeline_layout_CB[CPERFRAME_CB_NB],
+				0,
+				0,
+				CPERFRAME_SIZE,
+				&a_shared.dest_CB_array[CPERFRAME_CB_NB]
+			);
+#if _DEBUG_LOGS  
+			log_CB_injected("CPerFrame original - on_push_descriptors");
+#endif
 		}
 
 #if _DEBUG_CRASH 

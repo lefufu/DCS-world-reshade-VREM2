@@ -73,10 +73,16 @@ static void clear_tracking_flags()
 		do_not_draw = false;
 	}
 
+	// request restore of Cperframe haze value for next on_push_descriptors
+	if (a_shared.request_restore_Cperframe_haze)
+	{
+		a_shared.request_restore_Cperframe_haze = false;
+		a_shared.restore_Cperframe_haze = true;
+	}
+
 	// shared_data.track_for_CB[DEF_UNIFORMS_CB_NB] = false;
 	a_shared.draw_passed = true;
 
-	//if (a_shared.render_technique && flag_capture) reshade::log::message(reshade::log::level::info, "***** addon - ondraw*() => draw_passed = true");
 
 #ifdef _DEBUG
 	//to stop texture and buffer dump
@@ -113,7 +119,7 @@ extern "C" {
 		// log
 		if (g_shared_state->shader_hunter && flag_capture) log_ondraw(vertex_count, instance_count, first_vertex, first_instance);
 #endif		
-		if (!track_for_texture && !do_not_draw && !a_shared.render_technique && !a_shared.flag_texture_dump && !a_shared.flag_cb_dump) return false;
+		if (!track_for_texture && !do_not_draw && !a_shared.render_technique && !a_shared.flag_texture_dump && !a_shared.flag_cb_dump && !a_shared.request_restore_Cperframe_haze) return false;
 		
 		bool skip = false;
 		if (do_not_draw) skip = true;
@@ -150,7 +156,7 @@ extern "C" {
 		// log
 		if (g_shared_state->shader_hunter && flag_capture) log_on_draw_indexed(index_count, instance_count, first_index, vertex_offset, first_instance);
 #endif		
-		if (!track_for_texture && !do_not_draw && !a_shared.render_technique && !a_shared.flag_texture_dump && !a_shared.flag_cb_dump) return false;
+		if (!track_for_texture && !do_not_draw && !a_shared.render_technique && !a_shared.flag_texture_dump && !a_shared.flag_cb_dump && !a_shared.request_restore_Cperframe_haze) return false;
 
 		bool skip = false;
 		if (do_not_draw) skip = true;
@@ -181,7 +187,7 @@ extern "C" {
 		// log
 		if (g_shared_state->shader_hunter && flag_capture) log_on_drawOrDispatch_indirect(type, buffer, offset, draw_count, stride);
 #endif
-		if (!track_for_texture && !do_not_draw && !a_shared.render_technique && !a_shared.flag_texture_dump && !a_shared.flag_cb_dump) return false;
+		if (!track_for_texture && !do_not_draw && !a_shared.render_technique && !a_shared.flag_texture_dump && !a_shared.flag_cb_dump && !a_shared.request_restore_Cperframe_haze) return false;
 		
 		bool skip = false;
 		if (do_not_draw) skip = true;
