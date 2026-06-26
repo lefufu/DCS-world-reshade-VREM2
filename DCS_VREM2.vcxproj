@@ -114,10 +114,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>H:\utils\Repos\DCS_VREM2\Include_from_reshade;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Include_from_reshade;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>H:\utils\Repos\DCS_VREM2\Include_from_reshade;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Include_from_reshade;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -160,7 +160,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>H:\utils\Repos\DCS_VREM2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -168,7 +168,7 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>copy H:\utils\Repos\DCS_VREM2\x64\Debug\DCS_VREM2.dll "G:\jeux\DCS World OpenBeta\bin-mt"</Command>
+      <Command>copy $(SolutionDir)x64\$(Configuration)\DCS_VREM2.dll "G:\jeux\DCS World OpenBeta\bin-mt"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -182,7 +182,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>H:\utils\Repos\DCS_VREM2\Include_from_reshade\stb;H:\utils\Repos\DCS_VREM2\Include_from_reshade;H:\utils\Repos\DCS_VREM2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include_from_reshade\stb;$(SolutionDir)Include_from_reshade;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -190,10 +190,10 @@
       <EnableUAC>false</EnableUAC>
       <OptimizeReferences />
       <EnableCOMDATFolding />
-      <AdditionalLibraryDirectories>H:\utils\Repos\DCS_VREM2\x64libs_from_reshade;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)x64libs_from_reshade;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy H:\utils\Repos\DCS_VREM2\x64\Debug\DCS_VREM2.dll "G:\jeux\DCS World OpenBeta\bin-mt"</Command>
+      <Command>copy $(SolutionDir)x64\$(Configuration)\DCS_VREM2.dll "G:\jeux\DCS World OpenBeta\bin-mt"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
