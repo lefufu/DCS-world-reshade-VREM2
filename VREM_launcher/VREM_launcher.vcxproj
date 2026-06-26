@@ -234,7 +234,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>H:\utils\Repos\DCS_VREM2;H:\utils\Repos\DCS_VREM2\Include_from_reshade;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Include_from_reshade;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -242,7 +242,7 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>copy H:\utils\Repos\DCS_VREM2\x64\Debug\VREM_launcher.addon64 "G:\jeux\DCS World OpenBeta\bin-mt"</Command>
+      <Command>copy $(SolutionDir)x64\$(Configuration)\VREM_launcher.addon64 "G:\jeux\DCS World OpenBeta\bin-mt"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -256,7 +256,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>H:\utils\Repos\DCS_VREM2;H:\utils\Repos\DCS_VREM2\Include_from_reshade;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Include_from_reshade;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -266,7 +266,7 @@
       <EnableCOMDATFolding />
     </Link>
     <PostBuildEvent>
-      <Command>copy H:\utils\Repos\DCS_VREM2\x64\Release\VREM_launcher.addon64 "G:\jeux\DCS World OpenBeta\bin-mt"</Command>
+      <Command>copy $(SolutionDir)x64\$(Configuration)\VREM_launcher.addon64 "G:\jeux\DCS World OpenBeta\bin-mt"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
