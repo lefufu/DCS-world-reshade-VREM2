@@ -545,7 +545,7 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	// to define if VR is active or not (2D mirror view of VR )
 	{ 0x886E31F2, Shader_Definition(action_log, Feature::VRMode, L"", 0, {SET_DEFAULT}) },
 	// VS drawing cockpit parts to define if view is in welcome screen or map, used also for visor
-	{ 0xA337E177, Shader_Definition(action_log | action_replace, Feature::mapMode, L"0xA337E177.cso", 0, {SET_DEFAULT, SET_VISOR}) },
+	{ 0xC920E78F, Shader_Definition(action_log | action_replace, Feature::mapMode, L"visor_VS.cso", 0, {SET_DEFAULT, SET_VISOR}) },
 	
 	//{ 0xA337E177, Shader_Definition(action_log , Feature::mapMode, L"", 0, {SET_DEFAULT}) },
 	// VS associated with global PS 2, trigger draw increase (not in PS to be more DCS settings independant) and engage render technique if 2D mode only
@@ -556,16 +556,17 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	{0xC0CC8D69, Shader_Definition(action_replace, Feature::Rotor, L"AH64_rotorPS.cso", 0, {SET_HELO})},
 	{ 0x349A1054, Shader_Definition(action_replace, Feature::Rotor, L"AH64_rotor2PS.cso", 0, {SET_HELO}) },
 	//make game crash if replace_bind
-	{ 0xD3E172D4, Shader_Definition(action_replace, Feature::Rotor, L"UH1_rotorPS.cso", 0, {SET_HELO}) },
+	{ 0x1ab239a2, Shader_Definition(action_replace, Feature::Rotor, L"UH1_rotorPS.cso", 0, {SET_HELO}) },
 	// fix for IHADSS 
 	{ 0x2D713734, Shader_Definition(action_replace, Feature::IHADSS, L"IHADSS_PNVS_PS.cso", 0, {SET_HELO}) },
+	//creeate issue with F18 HUD ?
 	{ 0xDF141A84, Shader_Definition(action_replace, Feature::IHADSS, L"IHADSS_PS.cso", 0, {SET_HELO}) },
 	{ 0x45E221A9, Shader_Definition(action_replace, Feature::IHADSS, L"IHADSS_VS.cso", 0, {SET_HELO}) },
 
 	//*** MISC ***
 	// to start spying texture for depthStencil (Vs associated with global illumination PS)
 	// and inject modified CB CperFrame (all MSAA supported)
-	{ 0x4DDC4917, Shader_Definition(action_log |action_get_text| action_injectCB | action_track_RT | action_dump , Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
+	{ 0x4DDC4917, Shader_Definition(action_log |action_get_text| action_injectCB | action_track_RT  , Feature::GetStencil, L"", 0, {SET_TECHNIQUE, SET_MISC}) },
 	//VS of sky to inject restored CB CperFrame
 	{ 0x67b1ad91, Shader_Definition(action_injectCB | action_track_RT, Feature::VS_Sky, L"", 0, {SET_MISC,SET_TECHNIQUE }) },
 	//{ 0x67b1ad91, Shader_Definition(action_track_RT, Feature::VS_Sky, L"", 0, {SET_MISC,SET_TECHNIQUE }) },
@@ -590,9 +591,10 @@ inline  std::unordered_map<uint32_t, Shader_Definition> shader_by_hash =
 	// inject texture in global GUI and filter screen display (same shader for both)
 	{ 0xDB7FE106, Shader_Definition(action_replace | action_injectText, Feature::GUI_MFD, L"VR_GUI_PS.cso", 0,{SET_NS430}) },
 	// disable NS430 frame and screen, and aslo trakc screen texture
-	{ 0x8439C716, Shader_Definition(action_get_text| action_skip, Feature::NS430, L"", 0, {SET_NS430}) },
-	{ 0xEFD973A1, Shader_Definition(action_skip, Feature::NS430 , L"", 0, {SET_NS430}) },		
-	// { 0xEFD973A1, Shader_Definition(action_injectCB | action_skip, Feature::NS430 , L"", 0, {SET_MISC, SET_NS430}) },
+	//{ 0x8439C716, Shader_Definition(action_get_text| action_skip, Feature::NS430, L"", 0, {SET_NS430}) },
+	{ 0x8439C716, Shader_Definition(action_get_text | action_skip | action_dump, Feature::NS430, L"", 0, {SET_NS430}) },
+	//PS of NS430 frame
+	{ 0x46d0e940, Shader_Definition(action_skip, Feature::NS430 , L"", 0, {SET_NS430}) },
 	
 
 	//  ** NVG **
